@@ -7,14 +7,6 @@
 
 <%inherit file="../main.html" />
 
-<%block name="headextra">
-  % if self.theme_enabled():
-    <%include file="../theme-google-analytics.html" />
-  % else:
-    <%include file="../google_analytics.html" />
-  % endif
-</%block>
-
 <%block name="js_extra">
 
   <script type="text/javascript">
