@@ -52,8 +52,8 @@ class Location(_LocationBase):
     Locations representations of URLs of the
     form {tag}://{org}/{course}/{category}/{name}[@{revision}]
 
-    However, they can also be represented a dictionaries (specifying each component),
-    tuples or list (specified in order), or as strings of the url
+    However, they can also be represented as dictionaries (specifying each component),
+    tuples or lists (specified in order), or as strings of the url
     '''
     __slots__ = ()
 
@@ -196,7 +196,7 @@ class Location(_LocationBase):
                 raise InvalidLocationError(location)
 
             if len(location) == 5:
-                args = tuple(location) + (None, )
+                args = tuple(location) + (None,)
             else:
                 args = tuple(location)
 
@@ -415,7 +415,7 @@ class ModuleStoreBase(ModuleStore):
         '''
         Set up the error-tracking logic.
         '''
-        self._location_errors = {}    # location -> ErrorLog
+        self._location_errors = {}  # location -> ErrorLog
         self.metadata_inheritance_cache = None
         self.modulestore_update_signal = None  # can be set by runtime to route notifications of datastore changes
 
@@ -440,7 +440,7 @@ class ModuleStoreBase(ModuleStore):
         """
         # check that item is present and raise the promised exceptions if needed
         # TODO (vshnayder): post-launch, make errors properties of items
-        #self.get_item(location)
+        # self.get_item(location)
 
         errorlog = self._get_errorlog(location)
         return errorlog.errors
