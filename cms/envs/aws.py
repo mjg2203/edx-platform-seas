@@ -80,6 +80,8 @@ CELERY_QUEUES = {
 with open(ENV_ROOT / CONFIG_PREFIX + "env.json") as env_file:
     ENV_TOKENS = json.load(env_file)
 
+EMAIL_BACKEND = ENV_TOKENS.get('EMAIL_BACKEND', EMAIL_BACKEND)
+EMAIL_FILE_PATH = ENV_TOKENS.get('EMAIL_FILE_PATH', None)
 LMS_BASE = ENV_TOKENS.get('LMS_BASE')
 # Note that MITX_FEATURES['PREVIEW_LMS_BASE'] gets read in from the environment file.
 
@@ -144,10 +146,12 @@ DATADOG_API = AUTH_TOKENS.get("DATADOG_API")
 # Celery Broker
 CELERY_BROKER_TRANSPORT = ENV_TOKENS.get("CELERY_BROKER_TRANSPORT", "")
 CELERY_BROKER_HOSTNAME = ENV_TOKENS.get("CELERY_BROKER_HOSTNAME", "")
+CELERY_BROKER_VHOST = ENV_TOKENS.get("CELERY_BROKER_VHOST", "")
 CELERY_BROKER_USER = AUTH_TOKENS.get("CELERY_BROKER_USER", "")
 CELERY_BROKER_PASSWORD = AUTH_TOKENS.get("CELERY_BROKER_PASSWORD", "")
 
-BROKER_URL = "{0}://{1}:{2}@{3}".format(CELERY_BROKER_TRANSPORT,
-                                        CELERY_BROKER_USER,
-                                        CELERY_BROKER_PASSWORD,
-                                        CELERY_BROKER_HOSTNAME)
+BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(CELERY_BROKER_TRANSPORT,
+                                            CELERY_BROKER_USER,
+                                            CELERY_BROKER_PASSWORD,
+                                            CELERY_BROKER_HOSTNAME,
+                                            CELERY_BROKER_VHOST)

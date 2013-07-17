@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 import pyparsing
@@ -38,6 +38,7 @@ from courseware.masquerade import setup_masquerade
 from courseware.model_data import LmsKeyValueStore, LmsUsage, ModelDataCache
 from courseware.models import StudentModule
 from util.sandboxing import can_execute_unsafe_code
+from util.json_request import JsonResponse
 
 log = logging.getLogger(__name__)
 
@@ -473,7 +474,8 @@ def modx_dispatch(request, dispatch, location, course_id):
     error_msg = _check_files_limits(files)
     if error_msg:
         return HttpResponse(json.dumps({'success': error_msg}))
-    data.update(files)  # Merge files into data dictionary
+    for key in files:  # Merge files into to data dictionary
+        data[key] = files.getlist(key)
 
     try:
         descriptor = modulestore().get_instance(course_id, location)
@@ -508,11 +510,11 @@ def modx_dispatch(request, dispatch, location, course_id):
         log.exception("Module indicating to user that request doesn't exist")
         raise Http404
 
-    # For XModule-specific errors, we respond with 400
-    except ProcessingError:
-        log.warning("Module encountered an error while prcessing AJAX call",
+    # For XModule-specific errors, we log the error and respond with an error message
+    except ProcessingError as err:
+        log.warning("Module encountered an error while processing AJAX call",
                     exc_info=True)
-        return HttpResponseBadRequest()
+        return JsonResponse(object={'success': err.args[0]}, status=200)
 
     # If any other error occurred, re-raise it to trigger a 500 response
     except:
