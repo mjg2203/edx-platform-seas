@@ -134,7 +134,7 @@ MITX_FEATURES = {
     'ENABLE_SERVICE_STATUS': False,
 
     # Toggle to indicate use of a custom theme
-    'USE_CUSTOM_THEME': False,
+    'USE_CUSTOM_THEME': True,
 
     # Do autoplay videos for students
     'AUTOPLAY_VIDEOS': True,
@@ -751,7 +751,7 @@ MKTG_URLS = {}
 MKTG_URL_LINK_MAP = {
     'ABOUT': 'about_edx',
     'CONTACT': 'contact',
-    'FAQ': 'help_edx',
+#    'FAQ': 'help_edx',
     'COURSES': 'courses',
     'ROOT': 'root',
     'TOS': 'tos',
