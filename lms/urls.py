@@ -92,7 +92,7 @@ urlpatterns += (
 )
 
 # Semi-static views only used by edX, not by themes
-if not settings.MITX_FEATURES["USE_CUSTOM_THEME"]:
+if False:
     urlpatterns += (
         url(r'^jobs$', 'static_template_view.views.render',
             {'template': 'jobs.html'}, name="jobs"),

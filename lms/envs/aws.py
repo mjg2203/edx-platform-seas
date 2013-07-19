@@ -36,9 +36,9 @@ if SERVICE_VARIANT:
 DEBUG = False
 TEMPLATE_DEBUG = False
 
-EMAIL_BACKEND = 'django_ses.SESBackend'
+# EMAIL_BACKEND = 'django_ses.SESBackend'
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 
 # Enable Berkeley forums
 MITX_FEATURES['ENABLE_DISCUSSION_SERVICE'] = True
