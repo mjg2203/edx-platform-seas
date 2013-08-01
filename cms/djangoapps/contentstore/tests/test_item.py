@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from xmodule.capa_module import CapaDescriptor
 import json
 from xmodule.modulestore.django import modulestore
+import datetime
+from pytz import UTC
 
 
 class DeleteItem(CourseTestCase):
@@ -12,19 +14,26 @@ class DeleteItem(CourseTestCase):
         super(DeleteItem, self).setUp()
         self.course = CourseFactory.create(org='mitX', number='333', display_name='Dummy Course')
 
-    def testDeleteStaticPage(self):
+    def test_delete_static_page(self):
         # Add static tab
         data = json.dumps({
             'parent_location': 'i4x://mitX/333/course/Dummy_Course',
             'category': 'static_tab'
         })
 
-        resp = self.client.post(reverse('create_item'), data,
-            content_type="application/json")
+        resp = self.client.post(
+            reverse('create_item'),
+            data,
+            content_type="application/json"
+        )
         self.assertEqual(resp.status_code, 200)
 
         # Now delete it. There was a bug that the delete was failing (static tabs do not exist in draft modulestore).
-        resp = self.client.post(reverse('delete_item'), resp.content, "application/json")
+        resp = self.client.post(
+            reverse('delete_item'),
+            resp.content,
+            "application/json"
+        )
         self.assertEqual(resp.status_code, 200)
 
 
@@ -120,6 +129,7 @@ class TestCreateItem(CourseTestCase):
         )
         self.assertEqual(resp.status_code, 200)
 
+
 class TestEditItem(CourseTestCase):
     """
     Test contentstore.views.item.save_item
@@ -149,20 +159,21 @@ class TestEditItem(CourseTestCase):
         chap_location = self.response_id(resp)
         resp = self.client.post(
             reverse('create_item'),
-            json.dumps(
-                {'parent_location': chap_location,
-                 'category': 'vertical'
-                }),
+            json.dumps({
+                'parent_location': chap_location,
+                'category': 'sequential',
+            }),
             content_type="application/json"
         )
-        vert_location = self.response_id(resp)
+        self.seq_location = self.response_id(resp)
         # create problem w/ boilerplate
         template_id = 'multiplechoice.yaml'
         resp = self.client.post(
             reverse('create_item'),
-            json.dumps({'parent_location': vert_location,
-             'category': 'problem',
-             'boilerplate': template_id
+            json.dumps({
+                'parent_location': self.seq_location,
+                'category': 'problem',
+                'boilerplate': template_id,
             }),
             content_type="application/json"
         )
@@ -193,7 +204,6 @@ class TestEditItem(CourseTestCase):
         problem = modulestore('draft').get_item(self.problems[0])
         self.assertEqual(problem.rerandomize, 'never')
 
-
     def test_null_field(self):
         """
         Sending null in for a field 'deletes' it
@@ -210,3 +220,31 @@ class TestEditItem(CourseTestCase):
         )
         problem = modulestore('draft').get_item(self.problems[0])
         self.assertIsNone(problem.markdown)
+
+    def test_date_fields(self):
+        """
+        Test setting due & start dates on sequential
+        """
+        sequential = modulestore().get_item(self.seq_location)
+        self.assertIsNone(sequential.lms.due)
+        self.client.post(
+            reverse('save_item'),
+            json.dumps({
+                'id': self.seq_location,
+                'metadata': {'due': '2010-11-22T04:00Z'}
+            }),
+            content_type="application/json"
+        )
+        sequential = modulestore().get_item(self.seq_location)
+        self.assertEqual(sequential.lms.due, datetime.datetime(2010, 11, 22, 4, 0, tzinfo=UTC))
+        self.client.post(
+            reverse('save_item'),
+            json.dumps({
+                'id': self.seq_location,
+                'metadata': {'start': '2010-09-12T14:00Z'}
+            }),
+            content_type="application/json"
+        )
+        sequential = modulestore().get_item(self.seq_location)
+        self.assertEqual(sequential.lms.due, datetime.datetime(2010, 11, 22, 4, 0, tzinfo=UTC))
+        self.assertEqual(sequential.lms.start, datetime.datetime(2010, 9, 12, 14, 0, tzinfo=UTC))

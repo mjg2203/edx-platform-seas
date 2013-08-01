@@ -60,12 +60,10 @@ $(document).ready(function() {
         $('.nav-dd .nav-item .title').removeClass('is-selected');
     });
 
-    $('.nav-dd .nav-item .title').click(function(e) {
+    $('.nav-dd .nav-item').click(function(e) {
 
-        $subnav = $(this).parent().find('.wrapper-nav-sub');
-        $title = $(this).parent().find('.title');
-        e.preventDefault();
-        e.stopPropagation();
+        $subnav = $(this).find('.wrapper-nav-sub');
+        $title = $(this).find('.title');
 
         if ($subnav.hasClass('is-shown')) {
             $subnav.removeClass('is-shown');
@@ -75,6 +73,9 @@ $(document).ready(function() {
             $('.nav-dd .nav-item .wrapper-nav-sub').removeClass('is-shown');
             $title.addClass('is-selected');
             $subnav.addClass('is-shown');
+            // if propogation is not stopped, the event will bubble up to the
+            // body element, which will close the dropdown.
+            e.stopPropagation();
         }
     });
 
@@ -253,17 +254,13 @@ function syncReleaseDate(e) {
 }
 
 function getEdxTimeFromDateTimeVals(date_val, time_val) {
-    var edxTimeStr = null;
-
     if (date_val != '') {
         if (time_val == '') time_val = '00:00';
 
-        // Note, we are using date.js utility which has better parsing abilities than the built in JS date parsing
-        var date = Date.parse(date_val + " " + time_val);
-        edxTimeStr = date.toString('yyyy-MM-ddTHH:mm');
+        return new Date(date_val + " " + time_val + "Z");
     }
 
-    return edxTimeStr;
+    else return null;
 }
 
 function getEdxTimeFromDateTimeInputs(date_id, time_id) {
@@ -360,39 +357,61 @@ function createNewUnit(e) {
 
 function deleteUnit(e) {
     e.preventDefault();
-    _deleteItem($(this).parents('li.leaf'));
+    _deleteItem($(this).parents('li.leaf'), 'Unit');
 }
 
 function deleteSubsection(e) {
     e.preventDefault();
-    _deleteItem($(this).parents('li.branch'));
+    _deleteItem($(this).parents('li.branch'), 'Subsection');
 }
 
 function deleteSection(e) {
     e.preventDefault();
-    _deleteItem($(this).parents('section.branch'));
+    _deleteItem($(this).parents('section.branch'), 'Section');
 }
 
-function _deleteItem($el) {
-    if (!confirm(gettext('Are you sure you wish to delete this item. It cannot be reversed!'))) return;
+function _deleteItem($el, type) {
+    var confirm = new CMS.Views.Prompt.Warning({
+        title: gettext('Delete this ' + type + '?'),
+        message: gettext('Deleting this ' + type + ' is permanent and cannot be undone.'),
+        actions: {
+            primary: {
+                text: gettext('Yes, delete this ' + type),
+                click: function(view) {
+                    view.hide();
 
-    var id = $el.data('id');
+                    var id = $el.data('id');
 
-    analytics.track('Deleted an Item', {
-        'course': course_location_analytics,
-        'id': id
+                    analytics.track('Deleted an Item', {
+                        'course': course_location_analytics,
+                        'id': id
+                    });
+
+                    var deleting = new CMS.Views.Notification.Mini({
+                        title: gettext('Deleting') + '&hellip;'
+                    });
+                    deleting.show();
+
+                    $.post('/delete_item',
+                           {'id': id,
+                            'delete_children': true,
+                            'delete_all_versions': true},
+                           function(data) {
+                               $el.remove();
+                               deleting.hide();
+                           }
+                          );
+                }
+            },
+            secondary: {
+                text: gettext('Cancel'),
+                click: function(view) {
+                    view.hide();
+                }
+            }
+        }
     });
-
-
-    $.post('/delete_item', {
-        'id': id,
-        'delete_children': true,
-        'delete_all_versions': true
-    },
-
-    function(data) {
-        $el.remove();
-    });
+    confirm.show();
 }
 
 function markAsLoaded() {
@@ -578,11 +597,9 @@ function cancelNewSection(e) {
 
 function addNewCourse(e) {
     e.preventDefault();
-
-    $(e.target).hide();
-    var $newCourse = $($('#new-course-template').html());
+    $('.new-course-button').addClass('is-disabled');
+    var $newCourse = $('.wrapper-create-course').addClass('is-shown');
     var $cancelButton = $newCourse.find('.new-course-cancel');
-    $('.inner-wrapper').prepend($newCourse);
     $newCourse.find('.new-course-name').focus().select();
     $newCourse.find('form').bind('submit', saveNewCourse);
     $cancelButton.bind('click', cancelNewCourse);
@@ -594,41 +611,97 @@ function addNewCourse(e) {
 function saveNewCourse(e) {
     e.preventDefault();
 
-    var $newCourse = $(this).closest('.new-course');
-    var org = $newCourse.find('.new-course-org').val();
-    var number = $newCourse.find('.new-course-number').val();
-    var display_name = $newCourse.find('.new-course-name').val();
+    var $newCourseForm = $(this).closest('#create-course-form');
+    var display_name = $newCourseForm.find('.new-course-name').val();
+    var org = $newCourseForm.find('.new-course-org').val();
+    var number = $newCourseForm.find('.new-course-number').val();
+    var run = $newCourseForm.find('.new-course-run').val();
 
-    if (org == '' || number == '' || display_name == '') {
-        alert(gettext('You must specify all fields in order to create a new course.'));
-        return;
+    var required_field_text = gettext('Required field');
+
+    var display_name_errMsg = (display_name === '') ? required_field_text : null;
+    var org_errMsg = (org === '') ? required_field_text : null;
+    var number_errMsg = (number === '') ? required_field_text : null;
+    var run_errMsg = (run === '') ? required_field_text : null;
+
+    var bInErr = (display_name_errMsg || org_errMsg || number_errMsg || run_errMsg);
+
+    // check for suitable encoding
+    if (!bInErr) {
+        var encoding_errMsg = gettext('Please do not use any spaces or special characters in this field.');
+
+        if (encodeURIComponent(org) != org)
+            org_errMsg = encoding_errMsg;
+        if (encodeURIComponent(number) != number)
+            number_errMsg = encoding_errMsg;
+        if (encodeURIComponent(run) != run)
+            run_errMsg = encoding_errMsg;
+
+        bInErr = (org_errMsg || number_errMsg || run_errMsg);
     }
+
+    var header_err_msg = (bInErr) ? gettext('Please correct the fields below.') : null;
+
+    var setNewCourseErrMsgs = function(header_err_msg, display_name_errMsg, org_errMsg, number_errMsg, run_errMsg) {
+        if (header_err_msg) {
+            $('.wrapper-create-course').addClass('has-errors');
+            $('.wrap-error').addClass('is-shown');
+            $('#course_creation_error').html('<p>' + header_err_msg + '</p>');
+        } else {
+            $('.wrap-error').removeClass('is-shown');
+            $('#course_creation_error').html('');
+        }
+
+        var setNewCourseFieldInErr = function(el, msg) {
+            el.children('.tip-error').remove();
+            if (msg !== null && msg !== '') {
+                el.addClass('error');
+                el.append('<span class="tip tip-error">' + msg + '</span>');
+            } else {
+                el.removeClass('error');
+            }
+        };
+
+        setNewCourseFieldInErr($('#field-course-name'), display_name_errMsg);
+        setNewCourseFieldInErr($('#field-organization'), org_errMsg);
+        setNewCourseFieldInErr($('#field-course-number'), number_errMsg);
+        setNewCourseFieldInErr($('#field-course-run'), run_errMsg);
+    };
+
+    setNewCourseErrMsgs(header_err_msg, display_name_errMsg, org_errMsg, number_errMsg, run_errMsg);
+
+    if (bInErr)
+        return;
 
     analytics.track('Created a Course', {
         'org': org,
         'number': number,
-        'display_name': display_name
+        'display_name': display_name,
+        'run': run
     });
 
     $.post('/create_new_course', {
-        'org': org,
-        'number': number,
-        'display_name': display_name
-    },
-
-    function(data) {
-        if (data.id != undefined) {
-            window.location = '/' + data.id.replace(/.*:\/\//, '');
-        } else if (data.ErrMsg != undefined) {
-            alert(data.ErrMsg);
+            'org': org,
+            'number': number,
+            'display_name': display_name,
+            'run': run
+        },
+        function(data) {
+            if (data.id !== undefined) {
+                window.location = '/' + data.id.replace(/.*:\/\//, '');
+            } else if (data.ErrMsg !== undefined) {
+                var orgErrMsg = (data.OrgErrMsg !== undefined) ? data.OrgErrMsg : null;
+                var courseErrMsg = (data.CourseErrMsg !== undefined) ? data.CourseErrMsg : null;
+                setNewCourseErrMsgs(data.ErrMsg, null, orgErrMsg, courseErrMsg, null);
+            }
         }
-    });
+    );
 }
 
 function cancelNewCourse(e) {
     e.preventDefault();
-    $('.new-course-button').show();
-    $(this).parents('section.new-course').remove();
+    $('.new-course-button').removeClass('is-disabled');
+    $('.wrapper-create-course').removeClass('is-shown');
 }
 
 function addNewSubsection(e) {
@@ -732,7 +805,7 @@ function saveSetSectionScheduleDate(e) {
         var $thisSection = $('.courseware-section[data-id="' + id + '"]');
         var html = _.template(
             '<span class="published-status">' +
-                '<strong>' + gettext("Will Release: ") + '</strong>' +
+                '<strong>' + gettext("Will Release:") + '&nbsp;</strong>' +
                 gettext("<%= date %> at <%= time %> UTC") +
             '</span>' +
             '<a href="#" class="edit-button" data-date="<%= date %>" data-time="<%= time %>" data-id="<%= id %>">' +

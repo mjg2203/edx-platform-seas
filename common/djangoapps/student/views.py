@@ -19,6 +19,7 @@ from django.core.context_processors import csrf
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.core.validators import validate_email, validate_slug, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotAllowed, Http404
 from django.shortcuts import redirect
@@ -89,10 +90,7 @@ def index(request, extra_context={}, user=None):
     courses = get_courses(None, domain=domain)
     courses = sort_by_announcement(courses)
 
-    # Get the 3 most recent news
-    top_news = _get_news(top=3)
-
-    context = {'courses': courses, 'news': top_news}
+    context = {'courses': courses}
     context.update(extra_context)
     return render_to_response('index.html', context)
 
@@ -111,9 +109,9 @@ def get_date_for_press(publish_date):
     # strip off extra months, and just use the first:
     date = re.sub(multimonth_pattern, ", ", publish_date)
     if re.search(day_pattern, date):
-        date = datetime.datetime.strptime(date, "%B %d, %Y")
+        date = datetime.datetime.strptime(date, "%B %d, %Y").replace(tzinfo=UTC)
     else:
-        date = datetime.datetime.strptime(date, "%B, %Y")
+        date = datetime.datetime.strptime(date, "%B, %Y").replace(tzinfo=UTC)
     return date
 
 
@@ -284,9 +282,6 @@ def dashboard(request):
 
     exam_registrations = {course.id: exam_registration_info(request.user, course) for course in courses}
 
-    # Get the 3 most recent news
-    top_news = _get_news(top=3) if not settings.MITX_FEATURES.get('ENABLE_MKTG_SITE', False) else None
-
     # get info w.r.t ExternalAuthMap
     external_auth_map = None
     try:
@@ -301,7 +296,6 @@ def dashboard(request):
                'errored_courses': errored_courses,
                'show_courseware_links_for': show_courseware_links_for,
                'cert_statuses': cert_statuses,
-               'news': top_news,
                'exam_registrations': exam_registrations,
                }
 
@@ -674,18 +668,20 @@ def create_account(request, post_override=None):
     subject = ''.join(subject.splitlines())
     message = render_to_string('emails/activation_email.txt', d)
 
-    try:
-        if settings.MITX_FEATURES.get('REROUTE_ACTIVATION_EMAIL'):
-            dest_addr = settings.MITX_FEATURES['REROUTE_ACTIVATION_EMAIL']
-            message = ("Activation for %s (%s): %s\n" % (user, user.email, profile.name) +
-                       '-' * 80 + '\n\n' + message)
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [dest_addr], fail_silently=False)
-        elif not settings.GENERATE_RANDOM_USER_CREDENTIALS:
-            res = user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-    except:
-        log.warning('Unable to send activation email to user', exc_info=True)
-        js['value'] = _('Could not send activation e-mail.')
-        return HttpResponse(json.dumps(js))
+    # dont send email if we are doing load testing or random user generation for some reason
+    if not (settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_LOAD_TESTING')):
+        try:
+            if settings.MITX_FEATURES.get('REROUTE_ACTIVATION_EMAIL'):
+                dest_addr = settings.MITX_FEATURES['REROUTE_ACTIVATION_EMAIL']
+                message = ("Activation for %s (%s): %s\n" % (user, user.email, profile.name) +
+                           '-' * 80 + '\n\n' + message)
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [dest_addr], fail_silently=False)
+            else:
+                res = user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+        except:
+            log.warning('Unable to send activation email to user', exc_info=True)
+            js['value'] = _('Could not send activation e-mail.')
+            return HttpResponse(json.dumps(js))
 
     # Immediately after a user creates an account, we log them in. They are only
     # logged in until they close the browser. They can't log in again until they click
@@ -902,32 +898,51 @@ def create_exam_registration(request, post_override=None):
     return HttpResponse(json.dumps(js), mimetype="application/json")
 
 
-def get_random_post_override():
+def auto_auth(request):
     """
-    Return a dictionary suitable for passing to post_vars of _do_create_account or post_override
-    of create_account, with random user info.
+    Automatically logs the user in with a generated random credentials
+    This view is only accessible when
+    settings.MITX_SETTINGS['AUTOMATIC_AUTH_FOR_LOAD_TESTING'] is true.
     """
-    def id_generator(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits):
-        return ''.join(random.choice(chars) for x in range(size))
 
-    return {'username': "random_" + id_generator(),
-            'email': id_generator(size=10, chars=string.ascii_lowercase) + "_dummy_test@mitx.mit.edu",
-            'password': id_generator(),
-            'name': (id_generator(size=5, chars=string.ascii_lowercase) + " " +
-                     id_generator(size=7, chars=string.ascii_lowercase)),
-            'honor_code': u'true',
-            'terms_of_service': u'true', }
+    def get_dummy_post_data(username, password):
+        """
+        Return a dictionary suitable for passing to post_vars of _do_create_account or post_override
+        of create_account, with specified username and password.
+        """
 
+        return {'username': username,
+                'email': username + "_dummy_test@mitx.mit.edu",
+                'password': password,
+                'name': username + " " + username,
+                'honor_code': u'true',
+                'terms_of_service': u'true', }
 
-def create_random_account(create_account_function):
-    def inner_create_random_account(request):
-        return create_account_function(request, post_override=get_random_post_override())
+    # generate random user ceredentials from a small name space (determined by settings)
+    name_base = 'USER_'
+    pass_base = 'PASS_'
 
-    return inner_create_random_account
+    max_users = settings.MITX_FEATURES.get('MAX_AUTO_AUTH_USERS', 200)
+    number = random.randint(1, max_users)
 
-# TODO (vshnayder): do we need GENERATE_RANDOM_USER_CREDENTIALS for anything?
-if settings.GENERATE_RANDOM_USER_CREDENTIALS:
-    create_account = create_random_account(create_account)
+    username = name_base + str(number)
+    password = pass_base + str(number)
+
+    # if they already are a user, log in
+    try:
+        user = User.objects.get(username=username)
+        user = authenticate(username=username, password=password)
+        login(request, user)
+
+    # else create and activate account info
+    except ObjectDoesNotExist:
+        post_override = get_dummy_post_data(username, password)
+        create_account(request, post_override=post_override)
+        request.user.is_active = True
+        request.user.save()
+
+    # return empty success
+    return HttpResponse('')
 
 
 @ensure_csrf_cookie
@@ -1100,7 +1115,7 @@ def confirm_email_change(request, key):
         meta = up.get_meta()
         if 'old_emails' not in meta:
             meta['old_emails'] = []
-        meta['old_emails'].append([user.email, datetime.datetime.now().isoformat()])
+        meta['old_emails'].append([user.email, datetime.datetime.now(UTC).isoformat()])
         up.set_meta(meta)
         up.save()
         # Send it to the old email...
@@ -1198,7 +1213,7 @@ def accept_name_change_by_id(id):
     meta = up.get_meta()
     if 'old_names' not in meta:
         meta['old_names'] = []
-    meta['old_names'].append([up.name, pnc.rationale, datetime.datetime.now().isoformat()])
+    meta['old_names'].append([up.name, pnc.rationale, datetime.datetime.now(UTC).isoformat()])
     up.set_meta(meta)
 
     up.name = pnc.new_name
@@ -1220,28 +1235,3 @@ def accept_name_change(request):
         raise Http404
 
     return accept_name_change_by_id(int(request.POST['id']))
-
-
-def _get_news(top=None):
-    "Return the n top news items on settings.RSS_URL"
-
-    # Don't return anything if we're in a themed site
-    if settings.MITX_FEATURES["USE_CUSTOM_THEME"]:
-        return None
-
-    feed_data = cache.get("students_index_rss_feed_data")
-    if feed_data is None:
-        if hasattr(settings, 'RSS_URL'):
-            feed_data = urllib.urlopen(settings.RSS_URL).read()
-        else:
-            feed_data = render_to_string("feed.rss", None)
-        cache.set("students_index_rss_feed_data", feed_data, settings.RSS_TIMEOUT)
-
-    feed = feedparser.parse(feed_data)
-    entries = feed['entries'][0:top]  # all entries if top is None
-    for entry in entries:
-        soup = BeautifulSoup(entry.description)
-        entry.image = soup.img['src'] if soup.img else None
-        entry.summary = soup.getText()
-
-    return entries

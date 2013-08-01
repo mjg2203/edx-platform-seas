@@ -13,7 +13,7 @@ from django_future.csrf import ensure_csrf_cookie
 from django.core.urlresolvers import reverse
 from django.core.servers.basehttp import FileWrapper
 from django.core.files.temp import NamedTemporaryFile
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 
 from mitxmako.shortcuts import render_to_response
 from cache_toolbox.core import del_cached_content
@@ -29,7 +29,6 @@ from xmodule.util.date_utils import get_default_time_display
 from xmodule.modulestore import InvalidLocationError
 from xmodule.exceptions import NotFoundError
 
-from ..utils import get_url_reverse
 from .access import get_location_and_verify_access
 from util.json_request import JsonResponse
 
@@ -249,6 +248,7 @@ def remove_asset(request, org, course, name):
 
 
 @ensure_csrf_cookie
+@require_http_methods(("GET", "POST", "PUT"))
 @login_required
 def import_course(request, org, course, name):
     """
@@ -256,7 +256,7 @@ def import_course(request, org, course, name):
     """
     location = get_location_and_verify_access(request, org, course, name)
 
-    if request.method == 'POST':
+    if request.method in ('POST', 'PUT'):
         filename = request.FILES['course-data'].name
 
         if not filename.endswith('.tar.gz'):
@@ -283,7 +283,7 @@ def import_course(request, org, course, name):
         tar_file.extractall(course_dir + '/')
 
         # find the 'course.xml' file
-
+        dirpath = None
         for dirpath, _dirnames, filenames in os.walk(course_dir):
             for filename in filenames:
                 if filename == 'course.xml':
@@ -319,7 +319,11 @@ def import_course(request, org, course, name):
 
         return render_to_response('import.html', {
             'context_course': course_module,
-            'successful_import_redirect_url': get_url_reverse('CourseOutline', course_module)
+            'successful_import_redirect_url': reverse('course_index', kwargs={
+                'org': location.org,
+                'course': location.course,
+                'name': location.name,
+            })
         })
 
 

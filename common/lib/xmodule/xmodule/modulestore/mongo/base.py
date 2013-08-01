@@ -225,6 +225,8 @@ class CachingDescriptorSystem(MakoDescriptorSystem):
                     non_draft_loc = location.replace(revision=None)
                     metadata_to_inherit = self.cached_metadata.get(non_draft_loc.url(), {})
                     inherit_metadata(module, metadata_to_inherit)
+                # decache any computed pending field settings
+                module.save()
                 return module
             except:
                 log.warning("Failed to load descriptor", exc_info=True)
@@ -630,6 +632,8 @@ class MongoModuleStore(ModuleStoreBase):
                 definition_data = {}
         dbmodel = self._create_new_model_data(location.category, location, definition_data, metadata)
         xmodule = xblock_class(system, dbmodel)
+        # decache any pending field settings from init
+        xmodule.save()
         return xmodule
 
     def save_xmodule(self, xmodule):
@@ -639,6 +643,8 @@ class MongoModuleStore(ModuleStoreBase):
 
         :param xmodule:
         """
+        # Save any changes to the xmodule to the MongoKeyValueStore
+        xmodule.save()
         # split mongo's persist_dag is more general and useful.
         self.collection.save({
                 '_id': xmodule.location.dict(),
@@ -683,6 +689,8 @@ class MongoModuleStore(ModuleStoreBase):
                 'url_slug': new_object.location.name
             })
             course.tabs = existing_tabs
+            # Save any changes to the course to the MongoKeyValueStore
+            course.save()
             self.update_metadata(course.location, course.xblock_kvs._metadata)
 
     def fire_updated_modulestore_signal(self, course_id, location):
@@ -789,6 +797,8 @@ class MongoModuleStore(ModuleStoreBase):
                     tab['name'] = metadata.get('display_name')
                     break
             course.tabs = existing_tabs
+            # Save the updates to the course to the MongoKeyValueStore
+            course.save()
             self.update_metadata(course.location, own_metadata(course))
 
         self._update_single_item(location, {'metadata': metadata})
@@ -811,6 +821,8 @@ class MongoModuleStore(ModuleStoreBase):
             course = self.get_course_for_item(item.location)
             existing_tabs = course.tabs or []
             course.tabs = [tab for tab in existing_tabs if tab.get('url_slug') != location.name]
+            # Save the updates to the course to the MongoKeyValueStore
+            course.save()
             self.update_metadata(course.location, own_metadata(course))
 
         # Must include this to avoid the django debug toolbar (which defines the deprecated "safe=False")

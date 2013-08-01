@@ -309,7 +309,13 @@ class CapaModule(CapaFields, XModule):
         d = self.get_score()
         score = d['score']
         total = d['total']
+
         if total > 0:
+            if self.weight is not None:
+                # scale score and total by weight/total:
+                score = score * self.weight / total
+                total = self.weight
+
             try:
                 return Progress(score, total)
             except (TypeError, ValueError):
@@ -321,11 +327,13 @@ class CapaModule(CapaFields, XModule):
         """
         Return some html with data about the module
         """
+        progress = self.get_progress()
         return self.system.render_template('problem_ajax.html', {
             'element_id': self.location.html_id(),
             'id': self.id,
             'ajax_url': self.system.ajax_url,
-            'progress': Progress.to_js_status_str(self.get_progress())
+            'progress_status': Progress.to_js_status_str(progress),
+            'progress_detail': Progress.to_js_detail_str(progress),
         })
 
     def check_button_name(self):
@@ -485,8 +493,7 @@ class CapaModule(CapaFields, XModule):
         """
         Return html for the problem.
 
-        Adds check, reset, save buttons as necessary based on the problem config
-        and state.
+        Adds check, reset, save buttons as necessary based on the problem config and state.
         """
 
         try:
@@ -516,13 +523,12 @@ class CapaModule(CapaFields, XModule):
                    'reset_button': self.should_show_reset_button(),
                    'save_button': self.should_show_save_button(),
                    'answer_available': self.answer_available(),
-                   'ajax_url': self.system.ajax_url,
                    'attempts_used': self.attempts,
                    'attempts_allowed': self.max_attempts,
-                   'progress': self.get_progress(),
                    }
 
         html = self.system.render_template('problem.html', context)
+
         if encapsulate:
             html = u'<div id="problem_{id}" class="problem" data-url="{ajax_url}">'.format(
                 id=self.location.html_id(), ajax_url=self.system.ajax_url
@@ -584,6 +590,7 @@ class CapaModule(CapaFields, XModule):
         result.update({
             'progress_changed': after != before,
             'progress_status': Progress.to_js_status_str(after),
+            'progress_detail': Progress.to_js_detail_str(after),
         })
 
         return json.dumps(result, cls=ComplexEncoder)
@@ -614,6 +621,7 @@ class CapaModule(CapaFields, XModule):
         Problem can be completely wrong.
         Pressing RESET button makes this function to return False.
         """
+        # used by conditional module
         return self.lcp.done
 
     def is_attempted(self):
@@ -757,6 +765,7 @@ class CapaModule(CapaFields, XModule):
         """
         return {'html': self.get_problem_html(encapsulate=False)}
 
+
     @staticmethod
     def make_dict_of_responses(data):
         """
@@ -775,6 +784,13 @@ class CapaModule(CapaFields, XModule):
         For example, if the `data` dict contains {'input_1[]': 'test' }
         then the output dict would contain {'1': ['test'] }
         (the value is a list).
+
+        Some other inputs such as ChoiceTextInput expect a dict of values in the returned
+        dict  If the key ends with '{}' then we will assume that the value is a json
+        encoded dict and deserialize it.
+        For example, if the `data` dict contains {'input_1{}': '{"1_2_1": 1}'}
+        then the output dict would contain {'1': {"1_2_1": 1} }
+        (the value is a dictionary)
 
         Raises an exception if:
 
@@ -802,11 +818,22 @@ class CapaModule(CapaFields, XModule):
                 # the same form input (e.g. checkbox inputs). The convention is that
                 # if the name ends with '[]' (which looks like an array), then the
                 # answer will be an array.
+                # if the name ends with '{}' (Which looks like a dict),
+                # then the answer will be a dict
                 is_list_key = name.endswith('[]')
-                name = name[:-2] if is_list_key else name
+                is_dict_key = name.endswith('{}')
+                name = name[:-2] if is_list_key or is_dict_key else name
 
                 if is_list_key:
                     val = data.getlist(key)
+                elif is_dict_key:
+                    try:
+                        val = json.loads(data[key])
+                    # If the submission wasn't deserializable, raise an error.
+                    except(KeyError, ValueError):
+                        raise ValueError(
+                            u"Invalid submission: {val} for {key}".format(val=data[key], key=key)
+                        )
                 else:
                     val = data[key]
 
@@ -1099,8 +1126,12 @@ class CapaDescriptor(CapaFields, RawDescriptor):
     mako_template = "widgets/problem-edit.html"
     js = {'coffee': [resource_string(__name__, 'js/src/problem/edit.coffee')]}
     js_module_name = "MarkdownEditingDescriptor"
-    css = {'scss': [resource_string(__name__, 'css/editor/edit.scss'),
-                    resource_string(__name__, 'css/problem/edit.scss')]}
+    css = {
+        'scss': [
+            resource_string(__name__, 'css/editor/edit.scss'),
+            resource_string(__name__, 'css/problem/edit.scss')
+        ]
+    }
 
     # Capa modules have some additional metadata:
     # TODO (vshnayder): do problems have any other metadata?  Do they
@@ -1127,19 +1158,6 @@ class CapaDescriptor(CapaFields, RawDescriptor):
             'problems/' + path[8:],
             path[8:],
         ]
-
-    @classmethod
-    def from_xml(cls, xml_data, system, org=None, course=None):
-        """
-        Augment regular translation w/ setting the pre-Studio defaults.
-        """
-        problem = super(CapaDescriptor, cls).from_xml(xml_data, system, org, course)
-        # pylint: disable=W0212
-        if 'showanswer' not in problem._model_data:
-            problem.showanswer = "closed"
-        if 'rerandomize' not in problem._model_data:
-            problem.rerandomize = "always"
-        return problem
 
     @property
     def non_editable_metadata_fields(self):

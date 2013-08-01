@@ -1,10 +1,10 @@
 """
 Views related to operations on course objects
 """
-#pylint: disable=W0402
 import json
 import random
-import string
+from django.utils.translation import ugettext as _
+import string  # pylint: disable=W0402
 
 from django.contrib.auth.decorators import login_required
 from django_future.csrf import ensure_csrf_cookie
@@ -43,8 +43,7 @@ from .component import (
     ADVANCED_COMPONENT_POLICY_KEY)
 
 from django_comment_common.utils import seed_permissions_roles
-import datetime
-from django.utils.timezone import UTC
+
 from xmodule.html_module import AboutDescriptor
 __all__ = ['course_index', 'create_new_course', 'course_info',
            'course_info_updates', 'get_course_settings',
@@ -103,12 +102,13 @@ def create_new_course(request):
     org = request.POST.get('org')
     number = request.POST.get('number')
     display_name = request.POST.get('display_name')
+    run = request.POST.get('run')
 
     try:
-        dest_location = Location('i4x', org, number, 'course', Location.clean(display_name))
+        dest_location = Location('i4x', org, number, 'course', run)
     except InvalidLocationError as error:
         return JsonResponse({
-            "ErrMsg": "Unable to create course '{name}'.\n\n{err}".format(
+            "ErrMsg": _("Unable to create course '{name}'.\n\n{err}").format(
                 name=display_name, err=error.message)})
 
     # see if the course already exists
@@ -118,12 +118,24 @@ def create_new_course(request):
     except ItemNotFoundError:
         pass
     if existing_course is not None:
-        return JsonResponse({'ErrMsg': 'There is already a course defined with this name.'})
+        return JsonResponse(
+            {
+                'ErrMsg': _('There is already a course defined with the same organization, course number, and course run. Please change either organization or course number to be unique.'),
+                'OrgErrMsg': _('Please change either the organization or course number so that it is unique.'),
+                'CourseErrMsg': _('Please change either the organization or course number so that it is unique.'),
+            }
+        )
 
     course_search_location = ['i4x', dest_location.org, dest_location.course, 'course', None]
     courses = modulestore().get_items(course_search_location)
     if len(courses) > 0:
-        return JsonResponse({'ErrMsg': 'There is already a course defined with the same organization and course number.'})
+        return JsonResponse(
+            {
+                'ErrMsg': _('There is already a course defined with the same organization and course number. Please change at least one field to be unique.'),
+                'OrgErrMsg': _('Please change either the organization or course number so that it is unique.'),
+                'CourseErrMsg': _('Please change either the organization or course number so that it is unique.'),
+            }
+        )
 
     # instantiate the CourseDescriptor and then persist it
     # note: no system to pass
@@ -177,6 +189,7 @@ def course_info(request, org, course, name, provided_id=None):
 
 
 @expect_json
+@require_http_methods(("GET", "POST", "PUT", "DELETE"))
 @login_required
 @ensure_csrf_cookie
 def course_info_updates(request, org, course, provided_id=None):
@@ -207,7 +220,7 @@ def course_info_updates(request, org, course, provided_id=None):
         except:
             return HttpResponseBadRequest("Failed to delete",
                                           content_type="text/plain")
-    elif request.method == 'POST':
+    elif request.method in ('POST', 'PUT'):  # can be either and sometimes django is rewriting one to the other
         try:
             return JsonResponse(update_course_updates(location, request.POST, provided_id))
         except:
@@ -301,7 +314,7 @@ def course_settings_updates(request, org, course, name, section):
     if request.method == 'GET':
         # Cannot just do a get w/o knowing the course name :-(
         return JsonResponse(manager.fetch(Location(['i4x', org, course, 'course', name])), encoder=CourseSettingsEncoder)
-    elif request.method == 'POST':  # post or put, doesn't matter.
+    elif request.method in ('POST', 'PUT'):  # post or put, doesn't matter.
         return JsonResponse(manager.update_from_json(request.POST), encoder=CourseSettingsEncoder)
 
 
@@ -480,7 +493,7 @@ def textbook_index(request, org, course, name):
     if request.is_ajax():
         if request.method == 'GET':
             return JsonResponse(course_module.pdf_textbooks)
-        elif request.method == 'POST':
+        elif request.method in ('POST', 'PUT'):  # can be either and sometimes django is rewriting one to the other
             try:
                 textbooks = validate_textbooks_json(request.body)
             except TextbookValidationError as err:
@@ -496,6 +509,9 @@ def textbook_index(request, org, course, name):
             if not any(tab['type'] == 'pdf_textbooks' for tab in course_module.tabs):
                 course_module.tabs.append({"type": "pdf_textbooks"})
             course_module.pdf_textbooks = textbooks
+            # Save the data that we've just changed to the underlying
+            # MongoKeyValueStore before we update the mongo datastore.
+            course_module.save()
             store.update_metadata(course_module.location, own_metadata(course_module))
             return JsonResponse(course_module.pdf_textbooks)
     else:
@@ -542,6 +558,9 @@ def create_textbook(request, org, course, name):
         tabs = course_module.tabs
         tabs.append({"type": "pdf_textbooks"})
         course_module.tabs = tabs
+    # Save the data that we've just changed to the underlying
+    # MongoKeyValueStore before we update the mongo datastore.
+    course_module.save()
     store.update_metadata(course_module.location, own_metadata(course_module))
     resp = JsonResponse(textbook, status=201)
     resp["Location"] = reverse("textbook_by_id", kwargs={
@@ -575,7 +594,7 @@ def textbook_by_id(request, org, course, name, tid):
         if not textbook:
             return JsonResponse(status=404)
         return JsonResponse(textbook)
-    elif request.method in ('POST', 'PUT'):
+    elif request.method in ('POST', 'PUT'):  # can be either and sometimes django is rewriting one to the other
         try:
             new_textbook = validate_textbook_json(request.body)
         except TextbookValidationError as err:
@@ -585,10 +604,13 @@ def textbook_by_id(request, org, course, name, tid):
             i = course_module.pdf_textbooks.index(textbook)
             new_textbooks = course_module.pdf_textbooks[0:i]
             new_textbooks.append(new_textbook)
-            new_textbooks.extend(course_module.pdf_textbooks[i+1:])
+            new_textbooks.extend(course_module.pdf_textbooks[i + 1:])
             course_module.pdf_textbooks = new_textbooks
         else:
             course_module.pdf_textbooks.append(new_textbook)
+        # Save the data that we've just changed to the underlying
+        # MongoKeyValueStore before we update the mongo datastore.
+        course_module.save()
         store.update_metadata(course_module.location, own_metadata(course_module))
         return JsonResponse(new_textbook, status=201)
     elif request.method == 'DELETE':
@@ -596,7 +618,8 @@ def textbook_by_id(request, org, course, name, tid):
             return JsonResponse(status=404)
         i = course_module.pdf_textbooks.index(textbook)
         new_textbooks = course_module.pdf_textbooks[0:i]
-        new_textbooks.extend(course_module.pdf_textbooks[i+1:])
+        new_textbooks.extend(course_module.pdf_textbooks[i + 1:])
         course_module.pdf_textbooks = new_textbooks
+        course_module.save()
         store.update_metadata(course_module.location, own_metadata(course_module))
         return JsonResponse()

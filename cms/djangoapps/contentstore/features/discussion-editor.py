@@ -9,7 +9,8 @@ def i_created_discussion_tag(step):
     world.create_component_instance(
         step, '.large-discussion-icon',
         'discussion',
-        '.xmodule_DiscussionModule'
+        '.xmodule_DiscussionModule',
+        has_multiple_templates=False
     )
 
 
@@ -18,7 +19,7 @@ def i_see_only_the_settings_and_values(step):
     world.verify_all_setting_entries(
         [
             ['Category', "Week 1", False],
-            ['Display Name', "Discussion Tag", False],
+            ['Display Name', "Discussion", False],
             ['Subcategory', "Topic-Level Student-Visible Label", False]
         ])
 

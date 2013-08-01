@@ -5,9 +5,32 @@ These are notable changes in edx-platform.  This is a rolling list of changes,
 in roughly chronological order, most recent first.  Add your entries at or near
 the top.  Include a label indicating the component affected.
 
+Studio: Send e-mails to new Studio users (on edge only) when their course creator
+status has changed. This will not be in use until the course creator table
+is enabled.
+
+Studio: Added improvements to Course Creation: richer error messaging, tip
+text, and fourth field for course run.
+
+LMS: Added user preferences (arbitrary user/key/value tuples, for which
+which user/key is unique) and a REST API for reading users and
+preferences. Access to the REST API is restricted by use of the
+X-Edx-Api-Key HTTP header (which must match settings.EDX_API_KEY; if
+the setting is not present, the API is disabled).
+
+LMS: Added endpoints for AJAX requests to enable/disable notifications
+(which are not yet implemented) and a one-click unsubscribe page.
+
+Studio: Allow instructors of a course to designate other staff as instructors;
+this allows instructors to hand off management of a course to someone else.
+
+Common: Add a manage.py that knows about edx-platform specific settings and projects
+
 Common: Added *experimental* support for jsinput type.
 
 Common: Added setting to specify Celery Broker vhost
+
+Common: Utilize new XBlock bulk save API in LMS and CMS.
 
 Studio: Add table for tracking course creator permissions (not yet used).
 Update rake django-admin[syncdb] and rake django-admin[migrate] so they
@@ -20,6 +43,8 @@ XModule: Added *experimental* crowdsource hinting module.
 Studio: Added support for uploading and managing PDF textbooks
 
 Common: Student information is now passed to the tracking log via POST instead of GET.
+
+Blades: Added functionality and tests for new capa input type: choicetextresponse.
 
 Common: Add tests for documentation generation to test suite
 
@@ -43,7 +68,7 @@ history of background tasks for a given problem and student.
 Blades: Small UX fix on capa multiple-choice problems.  Make labels only
 as wide as the text to reduce accidental choice selections.
 
-Studio: 
+Studio:
 - use xblock field defaults to initialize all new instances' fields and
 only use templates as override samples.
 - create new instances via in memory create_xmodule and related methods rather

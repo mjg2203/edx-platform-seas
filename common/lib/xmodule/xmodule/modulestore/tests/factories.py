@@ -38,16 +38,6 @@ class XModuleCourseFactory(Factory):
             new_course.display_name = display_name
 
         new_course.lms.start = datetime.datetime.now(UTC).replace(microsecond=0)
-        new_course.tabs = kwargs.pop(
-            'tabs',
-            [
-                {"type": "courseware"},
-                {"type": "course_info", "name": "Course Info"},
-                {"type": "discussion", "name": "Discussion"},
-                {"type": "wiki", "name": "Wiki"},
-                {"type": "progress", "name": "Progress"}
-            ]
-        )
 
         # The rest of kwargs become attributes on the course:
         for k, v in kwargs.iteritems():
@@ -135,7 +125,6 @@ class XModuleItemFactory(Factory):
         # replace the display name with an optional parameter passed in from the caller
         if display_name is not None:
             metadata['display_name'] = display_name
-        # note that location comes from above lazy_attribute
         store.create_and_save_xmodule(location, metadata=metadata, definition_data=data)
 
         if location.category not in DETACHED_CATEGORIES:

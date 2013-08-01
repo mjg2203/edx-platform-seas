@@ -186,8 +186,8 @@ uses [Selenium](http://docs.seleniumhq.org/) to control the Chrome browser.
 
 **Prerequisite**: You must have [ChromeDriver](https://code.google.com/p/selenium/wiki/ChromeDriver)
 installed to run the tests in Chrome.  The tests are confirmed to run
-with Chrome (not Chromium) version 26.0.0.1410.63 with ChromeDriver
-version r195636.
+with Chrome (not Chromium) version 28.0.1500.71 with ChromeDriver
+version 2.1.210398.
 
 To run all the acceptance tests:
 
@@ -233,7 +233,7 @@ generates HTML and XML (Cobertura format) reports.
 
 When testing problems that use a queue server on AWS (e.g. sandbox-xqueue.edx.org), you'll need to run your server on your public IP, like so.
 
-`django-admin.py runserver --settings=lms.envs.dev --pythonpath=. 0.0.0.0:8000`
+`./manage.py lms runserver 0.0.0.0:8000`
 
 When you connect to the LMS, you need to use the public ip.  Use `ifconfig` to figure out the number, and connect e.g. to `http://18.3.4.5:8000/`
 

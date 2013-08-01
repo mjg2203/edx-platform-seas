@@ -59,31 +59,19 @@ urlpatterns = ('',  # nopep8
         name='auth_password_reset_done'),
 
     url(r'^heartbeat$', include('heartbeat.urls')),
+
+    url(r'^user_api/', include('user_api.urls')),
 )
 
-# University profiles only make sense in the default edX context
-if not settings.MITX_FEATURES["USE_CUSTOM_THEME"]:
-    urlpatterns += (
-        ##
-        ## Only universities without courses should be included here.  If
-        ## courses exist, the dynamic profile rule below should win.
-        ##
-        url(r'^(?i)university_profile/WellesleyX$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'WellesleyX'}),
-        url(r'^(?i)university_profile/McGillX$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'McGillX'}),
-        url(r'^(?i)university_profile/TorontoX$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'TorontoX'}),
-        url(r'^(?i)university_profile/RiceX$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'RiceX'}),
-        url(r'^(?i)university_profile/ANUx$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'ANUx'}),
-        url(r'^(?i)university_profile/EPFLx$', 'courseware.views.static_university_profile',
-            name="static_university_profile", kwargs={'org_id': 'EPFLx'}),
+js_info_dict = {
+    'domain': 'djangojs',
+    'packages': ('lms',),
+}
 
-        url(r'^university_profile/(?P<org_id>[^/]+)$', 'courseware.views.university_profile',
-            name="university_profile"),
-    )
+urlpatterns += (
+    # Serve catalog of localized strings to be rendered by Javascript
+    url(r'^jsi18n/$', 'django.views.i18n.javascript_catalog', js_info_dict),
+)
 
 #Semi-static views (these need to be rendered and have the login bar, but don't change)
 urlpatterns += (
@@ -175,6 +163,8 @@ if settings.COURSEWARE_ENABLED:
     urlpatterns += (
         url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/jump_to/(?P<location>.*)$',
             'courseware.views.jump_to', name="jump_to"),
+        url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/jump_to_id/(?P<module_id>.*)$',
+            'courseware.views.jump_to_id', name="jump_to_id"),
         url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/modx/(?P<location>.*?)/(?P<dispatch>[^/]*)$',
             'courseware.module_render.modx_dispatch',
             name='modx_dispatch'),
@@ -329,7 +319,11 @@ if settings.COURSEWARE_ENABLED:
             url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/news$',
                 'courseware.views.news', name="news"),
             url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/',
-                include('django_comment_client.urls'))
+                include('django_comment_client.urls')),
+            url(r'^notification_prefs/enable/', 'notification_prefs.views.ajax_enable'),
+            url(r'^notification_prefs/disable/', 'notification_prefs.views.ajax_disable'),
+            url(r'^notification_prefs/status/', 'notification_prefs.views.ajax_status'),
+            url(r'^notification_prefs/unsubscribe/(?P<token>[a-zA-Z0-9-_=]+)/', 'notification_prefs.views.unsubscribe'),
         )
     urlpatterns += (
         # This MUST be the last view in the courseware--it's a catch-all for custom tabs.
@@ -432,6 +426,12 @@ if settings.MITX_FEATURES.get('ENABLE_HINTER_INSTRUCTOR_VIEW'):
     urlpatterns += (
         url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/hint_manager$',
             'instructor.hint_manager.hint_manager', name="hint_manager"),
+    )
+
+# enable automatic login
+if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_LOAD_TESTING'):
+    urlpatterns += (
+        url(r'^auto_auth$', 'student.views.auto_auth'),
     )
 
 urlpatterns = patterns(*urlpatterns)

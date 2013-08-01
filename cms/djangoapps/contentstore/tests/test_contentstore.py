@@ -87,14 +87,15 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         self.user.is_active = True
         # Staff has access to view all courses
         self.user.is_staff = True
+
+        # Save the data that we've just changed to the db.
         self.user.save()
 
         self.client = Client()
         self.client.login(username=uname, password=password)
 
     def tearDown(self):
-        mongo = MongoClient()
-        mongo.drop_database(TEST_DATA_CONTENTSTORE['OPTIONS']['db'])
+        MongoClient().drop_database(TEST_DATA_CONTENTSTORE['OPTIONS']['db'])
         _CONTENTSTORE.clear()
 
     def check_components_on_page(self, component_types, expected_types):
@@ -117,6 +118,10 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
         course.advanced_modules = component_types
 
+        # Save the data that we've just changed to the underlying
+        # MongoKeyValueStore before we update the mongo datastore.
+        course.save()
+
         store.update_metadata(course.location, own_metadata(course))
 
         # just pick one vertical
@@ -134,7 +139,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         self.check_components_on_page(ADVANCED_COMPONENT_TYPES, ['Video Alpha',
                                                                  'Word cloud',
                                                                  'Annotation',
-                                                                 'Open Ended Grading',
+                                                                 'Open Response Assessment',
                                                                  'Peer Grading Interface'])
 
     def test_advanced_components_require_two_clicks(self):
@@ -239,6 +244,9 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
         self.assertNotIn('graceperiod', own_metadata(html_module))
         html_module.lms.graceperiod = new_graceperiod
+        # Save the data that we've just changed to the underlying
+        # MongoKeyValueStore before we update the mongo datastore.
+        html_module.save()
         self.assertIn('graceperiod', own_metadata(html_module))
         self.assertEqual(html_module.lms.graceperiod, new_graceperiod)
 
@@ -302,6 +310,23 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         course = module_store.get_item(Location(['i4x', 'edX', 'toy', 'course', '2012_Fall', None]))
 
         self.assertGreater(len(course.textbooks), 0)
+
+    def test_default_tabs_on_create_course(self):
+        module_store = modulestore('direct')
+        CourseFactory.create(org='edX', course='999', display_name='Robot Super Course')
+        course_location = Location(['i4x', 'edX', '999', 'course', 'Robot_Super_Course', None])
+
+        course = module_store.get_item(course_location)
+
+        expected_tabs = []
+        expected_tabs.append({u'type': u'courseware'})
+        expected_tabs.append({u'type': u'course_info', u'name': u'Course Info'})
+        expected_tabs.append({u'type': u'textbooks'})
+        expected_tabs.append({u'type': u'discussion', u'name': u'Discussion'})
+        expected_tabs.append({u'type': u'wiki', u'name': u'Wiki'})
+        expected_tabs.append({u'type': u'progress', u'name': u'Progress'})
+
+        self.assertEqual(course.tabs, expected_tabs)
 
     def test_static_tab_reordering(self):
         module_store = modulestore('direct')
@@ -578,6 +603,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
             'org': 'MITx',
             'number': '999',
             'display_name': 'Robot Super Course',
+            'run': '2013_Spring'
         }
 
         module_store = modulestore('direct')
@@ -586,12 +612,12 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         resp = self.client.post(reverse('create_new_course'), course_data)
         self.assertEqual(resp.status_code, 200)
         data = parse_json(resp)
-        self.assertEqual(data['id'], 'i4x://MITx/999/course/Robot_Super_Course')
+        self.assertEqual(data['id'], 'i4x://MITx/999/course/2013_Spring')
 
         content_store = contentstore()
 
         source_location = CourseDescriptor.id_to_location('edX/toy/2012_Fall')
-        dest_location = CourseDescriptor.id_to_location('MITx/999/Robot_Super_Course')
+        dest_location = CourseDescriptor.id_to_location('MITx/999/2013_Spring')
 
         clone_course(module_store, content_store, source_location, dest_location)
 
@@ -829,6 +855,68 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
         shutil.rmtree(root_dir)
 
+    def test_export_course_with_metadata_only_word_cloud(self):
+        """
+        Similar to `test_export_course_with_metadata_only_video`.
+        """
+        module_store = modulestore('direct')
+        draft_store = modulestore('draft')
+        content_store = contentstore()
+
+        import_from_xml(module_store, 'common/test/data/', ['word_cloud'])
+        location = CourseDescriptor.id_to_location('HarvardX/ER22x/2013_Spring')
+
+        verticals = module_store.get_items(['i4x', 'HarvardX', 'ER22x', 'vertical', None, None])
+
+        self.assertGreater(len(verticals), 0)
+
+        parent = verticals[0]
+
+        ItemFactory.create(parent_location=parent.location, category="word_cloud", display_name="untitled")
+
+        root_dir = path(mkdtemp_clean())
+
+        print 'Exporting to tempdir = {0}'.format(root_dir)
+
+        # export out to a tempdir
+        export_to_xml(module_store, content_store, location, root_dir, 'test_export', draft_modulestore=draft_store)
+
+        shutil.rmtree(root_dir)
+
+    def test_empty_data_roundtrip(self):
+        """
+        Test that an empty `data` field is preserved through
+        export/import.
+        """
+        module_store = modulestore('direct')
+        draft_store = modulestore('draft')
+        content_store = contentstore()
+
+        import_from_xml(module_store, 'common/test/data/', ['toy'])
+        location = CourseDescriptor.id_to_location('edX/toy/2012_Fall')
+
+        verticals = module_store.get_items(['i4x', 'edX', 'toy', 'vertical', None, None])
+
+        self.assertGreater(len(verticals), 0)
+
+        parent = verticals[0]
+
+        # Create a module, and ensure that its `data` field is empty
+        word_cloud = ItemFactory.create(parent_location=parent.location, category="word_cloud", display_name="untitled")
+        del word_cloud.data
+        self.assertEquals(word_cloud.data, '')
+
+        # Export the course
+        root_dir = path(mkdtemp_clean())
+        export_to_xml(module_store, content_store, location, root_dir, 'test_roundtrip', draft_modulestore=draft_store)
+
+        # Reimport and get the video back
+        import_from_xml(module_store, root_dir)
+        imported_word_cloud = module_store.get_item(Location(['i4x', 'edX', 'toy', 'word_cloud', 'untitled', None]))
+
+        # It should now contain empty data
+        self.assertEquals(imported_word_cloud.data, '')
+
     def test_course_handouts_rewrites(self):
         module_store = modulestore('direct')
 
@@ -883,6 +971,9 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         # add a bool piece of unknown metadata so we can verify we don't throw an exception
         metadata['new_metadata'] = True
 
+        # Save the data that we've just changed to the underlying
+        # MongoKeyValueStore before we update the mongo datastore.
+        course.save()
         module_store.update_metadata(location, metadata)
 
         print 'Exporting to tempdir = {0}'.format(root_dir)
@@ -925,6 +1016,7 @@ class ContentStoreTest(ModuleStoreTestCase):
             'org': 'MITx',
             'number': '999',
             'display_name': 'Robot Super Course',
+            'run': '2013_Spring'
         }
 
     def tearDown(self):
@@ -936,24 +1028,30 @@ class ContentStoreTest(ModuleStoreTestCase):
         """Test new course creation - happy path"""
         self.assert_created_course()
 
-    def assert_created_course(self):
+    def assert_created_course(self, number_suffix=None):
         """
         Checks that the course was created properly.
         """
-        resp = self.client.post(reverse('create_new_course'), self.course_data)
+        test_course_data = {}
+        test_course_data.update(self.course_data)
+        if number_suffix:
+            test_course_data['number'] = '{0}_{1}'.format(test_course_data['number'], number_suffix)
+        resp = self.client.post(reverse('create_new_course'), test_course_data)
         self.assertEqual(resp.status_code, 200)
         data = parse_json(resp)
-        self.assertEqual(data['id'], 'i4x://MITx/999/course/Robot_Super_Course')
+        self.assertNotIn('ErrMsg', data)
+        self.assertEqual(data['id'], 'i4x://MITx/{0}/course/2013_Spring'.format(test_course_data['number']))
+        return test_course_data
 
     def test_create_course_check_forum_seeding(self):
         """Test new course creation and verify forum seeding """
-        self.assert_created_course()
-        self.assertTrue(are_permissions_roles_seeded('MITx/999/Robot_Super_Course'))
+        test_course_data = self.assert_created_course(number_suffix=uuid4().hex)
+        self.assertTrue(are_permissions_roles_seeded('MITx/{0}/2013_Spring'.format(test_course_data['number'])))
 
     def test_create_course_duplicate_course(self):
         """Test new course creation - error path"""
         self.client.post(reverse('create_new_course'), self.course_data)
-        self.assert_course_creation_failed('There is already a course defined with this name.')
+        self.assert_course_creation_failed('There is already a course defined with the same organization, course number, and course run. Please change either organization or course number to be unique.')
 
     def assert_course_creation_failed(self, error_message):
         """
@@ -968,8 +1066,9 @@ class ContentStoreTest(ModuleStoreTestCase):
         """Test new course creation - error path"""
         self.client.post(reverse('create_new_course'), self.course_data)
         self.course_data['display_name'] = 'Robot Super Course Two'
+        self.course_data['run'] = '2013_Summer'
 
-        self.assert_course_creation_failed('There is already a course defined with the same organization and course number.')
+        self.assert_course_creation_failed('There is already a course defined with the same organization and course number. Please change at least one field to be unique.')
 
     def test_create_course_with_bad_organization(self):
         """Test new course creation - error path for bad organization name"""
@@ -1138,7 +1237,9 @@ class ContentStoreTest(ModuleStoreTestCase):
 
         # manage users
         resp = self.client.get(reverse('manage_users',
-                                       kwargs={'location': loc.url()}))
+                                       kwargs={'org': loc.org,
+                                               'course': loc.course,
+                                               'name': loc.name}))
         self.assertEqual(200, resp.status_code)
 
         # course info
@@ -1299,6 +1400,7 @@ class ContentStoreTest(ModuleStoreTestCase):
         # now let's define an override at the leaf node level
         #
         new_module.lms.graceperiod = timedelta(1)
+        new_module.save()
         module_store.update_metadata(new_module.location, own_metadata(new_module))
 
         # flush the cache and refetch
@@ -1329,3 +1431,63 @@ class ContentStoreTest(ModuleStoreTestCase):
         self.assertEqual(course.textbooks, fetched_course.textbooks)
         # is this test too strict? i.e., it requires the dicts to be ==
         self.assertEqual(course.checklists, fetched_course.checklists)
+
+
+class MetadataSaveTestCase(ModuleStoreTestCase):
+    """
+    Test that metadata is correctly decached.
+    """
+
+    def setUp(self):
+        sample_xml = '''
+        <video display_name="Test Video"
+                youtube="1.0:p2Q6BrNhdh8,0.75:izygArpw-Qo,1.25:1EeWXzPdhSA,1.5:rABDYkeK0x8"
+                show_captions="false"
+                from="00:00:01"
+                to="00:01:00">
+            <source src="http://www.example.com/file.mp4"/>
+            <track src="http://www.example.com/track"/>
+        </video>
+        '''
+        CourseFactory.create(org='edX', course='999', display_name='Robot Super Course')
+        course_location = Location(['i4x', 'edX', '999', 'course', 'Robot_Super_Course', None])
+
+        model_data = {'data': sample_xml}
+        self.descriptor = ItemFactory.create(parent_location=course_location, category='video', data=model_data)
+
+    def test_metadata_persistence(self):
+        """
+        Test that descriptors which set metadata fields in their
+        constructor are correctly persisted.
+        """
+        # We should start with a source field, from the XML's <source/> tag
+        self.assertIn('source', own_metadata(self.descriptor))
+        attrs_to_strip = {
+            'show_captions',
+            'youtube_id_1_0',
+            'youtube_id_0_75',
+            'youtube_id_1_25',
+            'youtube_id_1_5',
+            'start_time',
+            'end_time',
+            'source',
+            'track'
+        }
+        # We strip out all metadata fields to reproduce a bug where
+        # constructors which set their fields (e.g. Video) didn't have
+        # those changes persisted. So in the end we have the XML data
+        # in `descriptor.data`, but not in the individual fields
+        fields = self.descriptor.fields
+        for field in fields:
+            if field.name in attrs_to_strip:
+                field.delete_from(self.descriptor)
+
+        # Assert that we correctly stripped the field
+        self.assertNotIn('source', own_metadata(self.descriptor))
+        get_modulestore(self.descriptor.location).update_metadata(
+            self.descriptor.location,
+            own_metadata(self.descriptor)
+        )
+        module = get_modulestore(self.descriptor.location).get_item(self.descriptor.location)
+        # Assert that get_item correctly sets the metadata
+        self.assertIn('source', own_metadata(module))

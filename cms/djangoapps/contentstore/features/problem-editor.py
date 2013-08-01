@@ -155,6 +155,10 @@ def cancel_does_not_save_changes(step):
 @step('I have created a LaTeX Problem')
 def create_latex_problem(step):
     world.click_new_component_button(step, '.large-problem-icon')
+
+    def animation_done(_driver):
+        return world.browser.evaluate_script("$('div.new-component').css('display')") == 'none'
+    world.wait_for(animation_done)
     # Go to advanced tab.
     world.css_click('#ui-id-2')
     world.click_component_from_menu("problem", "latex_problem.yaml", '.xmodule_CapaModule')
@@ -170,7 +174,8 @@ def edit_latex_source(step):
 @step('my change to the High Level Source is persisted')
 def high_level_source_persisted(step):
     def verify_text(driver):
-        return world.css_text('.problem') == 'hi'
+        css_sel = '.problem div>span'
+        return world.css_text(css_sel) == 'hi'
 
     world.wait_for(verify_text)
 
