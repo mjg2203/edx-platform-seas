@@ -14,9 +14,18 @@ sessions. Assumes structure:
 
 from .common import *
 from logsettings import get_logger_config
+import json
 
 DEBUG = True
 TEMPLATE_DEBUG = True
+
+with open(ENV_ROOT / "env.json") as env_file:
+    ENV_TOKENS = json.load(env_file)
+
+THEME_NAME=ENV_TOKENS.get('THEME_NAME', None)
+
+enable_theme(THEME_NAME)
+FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
 
 MITX_FEATURES['DISABLE_START_DATES'] = True
