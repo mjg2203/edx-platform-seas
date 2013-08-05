@@ -113,7 +113,7 @@ urlpatterns += (
     url(r'^howitworks$', 'contentstore.views.howitworks', name='howitworks'),
     url(r'^signup$', 'contentstore.views.signup', name='signup'),
 
-    url(r'^create_account$', 'student.views.create_account'),
+    url(r'^create_account$', 'student.views.create_account', name='create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name='activate'),
 
     # form page

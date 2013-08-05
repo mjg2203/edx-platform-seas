@@ -126,7 +126,7 @@
         e.preventDefault();
         var submit_data = $('#register_form').serialize();
 
-        postJSON('/create_account',
+        postJSON('${reverse('create_account')}',
           submit_data,
           function(json) {
             if(json.success) {
