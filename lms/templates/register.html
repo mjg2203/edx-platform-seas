@@ -174,60 +174,6 @@
         % endif
       </fieldset>
 
-      <fieldset class="group group-form group-form-secondary group-form-personalinformation">
-        <legend class="sr">${_("Optional Personal Information")}</legend>
-
-        <ol class="list-input">
-          <li class="field-group">
-            <div class="field select" id="field-education-level">
-              <label for="education-level">${_("Highest Level of Education Completed")}</label>
-              <select id="education-level" name="level_of_education">
-                <option value="">--</option>
-                %for code, ed_level in UserProfile.LEVEL_OF_EDUCATION_CHOICES:
-                <option value="${code}">${ed_level}</option>
-                %endfor
-              </select>
-            </div>
-
-            <div class="field select" id="field-gender">
-              <label for="gender">${_("Gender")}</label>
-              <select id="gender" name="gender">
-                <option value="">--</option>
-                %for code, gender in UserProfile.GENDER_CHOICES:
-                <option value="${code}">${gender}</option>
-                %endfor
-              </select>
-            </div>
-
-            <div class="field select" id="field-yob">
-              <label for="yob">${_("Year of Birth")}</label>
-              <select id="yob" name="year_of_birth">
-                <option value="">--</option>
-                %for year in UserProfile.VALID_YEARS:
-                <option value="${year}">${year}</option>
-                %endfor
-              </select>
-            </div>
-          </li>
-        </ol>
-      </fieldset>
-
-      <fieldset class="group group-form group-form-personalinformation2">
-        <legend class="sr">${_("Optional Personal Information")}</legend>
-
-        <ol class="list-input">
-          <li class="field text" id="field-address-mailing">
-            <label for="address-mailing">${_("Mailing Address")}</label>
-            <textarea id="address-mailing" name="mailing_address" value=""></textarea>
-          </li>
-
-          <li class="field text" id="field-goals">
-            <label for="goals">${_("Please share with us your reasons for registering with {platform_name}").format(platform_name=settings.PLATFORM_NAME)}</label>
-            <textarea id="goals" name="goals" value=""></textarea>
-          </li>
-        </ol>
-      </fieldset>
-
       <fieldset class="group group-form group-form-accountacknowledgements">
         <legend class="sr">${_("Account Acknowledgements")}</legend>
 
