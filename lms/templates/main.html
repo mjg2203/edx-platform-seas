@@ -19,21 +19,7 @@
 <html>
 <head>
   <%block name="title">
-    % if stanford_theme_enabled():
-      <title>${_("Home")} | class.stanford.edu</title>
-    % else:
-      ## "edX" should not be translated
-      <title>edX</title>
-
-      <script type="text/javascript">
-        /* immediately break out of an iframe if coming from the marketing website */
-        (function(window) {
-          if (window.location !== window.top.location) {
-            window.top.location = window.location;
-          }
-        })(this);
-      </script>
-    % endif
+    <title>${_("Home")} | OpenEdX LMS | Columbia Engineering</title>
   </%block>
 
   <script type="text/javascript" src="/jsi18n/"></script>
