@@ -2,6 +2,7 @@ from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from django.conf.urls.static import static
+import wind.views
 
 # Not used, the work is done in the imported module.
 from . import one_time_startup      # pylint: disable=W0611
@@ -18,7 +19,10 @@ urlpatterns = ('',  # nopep8
     url(r'^update_certificate$', 'certificates.views.update_certificate'),
     url(r'^$', 'branding.views.index', name="root"),   # Main marketing page, or redirect to courseware
     url(r'^dashboard$', 'student.views.dashboard', name="dashboard"),
-    url(r'^login$', 'student.views.signin_user', name="signin_user"),
+    
+    # url(r'^login$', 'student.views.signin_user', name="signin_user"),
+    url(r'^login/', 'wind.views.login', name="signin_user"),
+    
     url(r'^register$', 'student.views.register_user', name="register_user"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
@@ -32,10 +36,13 @@ urlpatterns = ('',  # nopep8
     url(r'^event$', 'track.views.user_track'),
     url(r'^t/(?P<template>[^/]*)$', 'static_template_view.views.index'),   # TODO: Is this used anymore? What is STATIC_GRAB?
 
-    url(r'^accounts/login$', 'student.views.accounts_login', name="accounts_login"),
 
-    url(r'^login_ajax$', 'student.views.login_user', name="login"),
-    url(r'^login_ajax/(?P<error>[^/]*)$', 'student.views.login_user'),
+    #url(r'^accounts/login$', 'student.views.accounts_login', name="accounts_login"),
+    url(r'^accounts/login$', 'wind.views.login', name="accounts_login"),
+    
+
+    #url(r'^login_ajax$', 'student.views.login_user', name="login"),
+    #url(r'^login_ajax/(?P<error>[^/]*)$', 'student.views.login_user'),
     url(r'^logout$', 'student.views.logout_user', name='logout'),
     url(r'^create_account$', 'student.views.create_account', name='create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name="activate"),

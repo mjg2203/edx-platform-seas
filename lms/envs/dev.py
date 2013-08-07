@@ -262,3 +262,7 @@ try:
     from .private import *      # pylint: disable=F0401
 except ImportError:
     pass
+
+
+######################WIND############
+INSTALLED_APPS += ('wind',)
