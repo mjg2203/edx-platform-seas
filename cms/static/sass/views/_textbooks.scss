@@ -30,7 +30,7 @@ body.course.textbooks {
     }
 
     .textbook {
-      @extend .window;
+      @extend .ui-window;
       position: relative;
 
       .view-textbook {
@@ -115,7 +115,7 @@ body.course.textbooks {
             }
 
             .delete {
-              @extend .btn-non;
+              @extend .ui-btn-non;
             }
           }
 
@@ -147,6 +147,14 @@ body.course.textbooks {
         border-top: 1px solid $gray-l1;
         padding: ($baseline*0.75) $baseline;
         background: $gray-l6;
+
+        .action {
+          margin-right: ($baseline/4);
+
+          &:last-child {
+            margin-right: 0;
+          }
+        }
 
         // add a chapter is below with chapters styling
 
@@ -188,7 +196,7 @@ body.course.textbooks {
 
       .chapters-fields,
       .textbook-fields {
-        @extend .no-list;
+        @extend .cont-no-list;
 
         .field {
           margin: 0 0 ($baseline*0.75) 0;
@@ -320,7 +328,7 @@ body.course.textbooks {
             }
 
             .action-upload {
-                @extend .btn-flat-outline;
+                @extend .ui-btn-flat-outline;
                 position: absolute;
                 top: 3px;
                 right: 0;
@@ -348,7 +356,7 @@ body.course.textbooks {
 
 
       .action-add-chapter {
-        @extend .btn-flat-outline;
+        @extend .ui-btn-flat-outline;
         @include font-size(16);
         display: block;
         width: 100%;
@@ -365,7 +373,7 @@ body.course.textbooks {
 
  // dialog
 .wrapper-dialog {
-  @extend .depth5;
+  @extend .ui-depth5;
   @include transition(all 0.05s ease-in-out);
   position: fixed;
   top: 0;

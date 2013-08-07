@@ -80,6 +80,8 @@ CELERY_QUEUES = {
 with open(ENV_ROOT / CONFIG_PREFIX + "env.json") as env_file:
     ENV_TOKENS = json.load(env_file)
 
+EMAIL_BACKEND = ENV_TOKENS.get('EMAIL_BACKEND', EMAIL_BACKEND)
+EMAIL_FILE_PATH = ENV_TOKENS.get('EMAIL_FILE_PATH', None)
 LMS_BASE = ENV_TOKENS.get('LMS_BASE')
 # Note that MITX_FEATURES['PREVIEW_LMS_BASE'] gets read in from the environment file.
 
@@ -90,6 +92,7 @@ LOG_DIR = ENV_TOKENS['LOG_DIR']
 CACHES = ENV_TOKENS['CACHES']
 
 SESSION_COOKIE_DOMAIN = ENV_TOKENS.get('SESSION_COOKIE_DOMAIN')
+SESSION_ENGINE = ENV_TOKENS.get('SESSION_ENGINE', SESSION_ENGINE)
 
 # allow for environments to specify what cookie name our login subsystem should use
 # this is to fix a bug regarding simultaneous logins between edx.org and edge.edx.org which can
@@ -119,6 +122,10 @@ LOGGING = get_logger_config(LOG_DIR,
                             syslog_addr=(ENV_TOKENS['SYSLOG_SERVER'], 514),
                             debug=False,
                             service_variant=SERVICE_VARIANT)
+
+#theming start:
+PLATFORM_NAME = ENV_TOKENS.get('PLATFORM_NAME', 'edX')
+
 
 ################ SECURE AUTH ITEMS ###############################
 # Secret things: passwords, access keys, etc.

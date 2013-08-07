@@ -24,13 +24,10 @@ def go_to_uploads(_step):
 def upload_file(_step, file_name):
     upload_css = 'a.upload-button'
     world.css_click(upload_css)
-
-    file_css = 'input.file-input'
-    upload = world.css_find(file_css)
     #uploading the file itself
     path = os.path.join(TEST_ROOT, 'uploads/', file_name)
-    upload._element.send_keys(os.path.abspath(path))
-
+    world.browser.execute_script("$('input.file-input').css('display', 'block')")
+    world.browser.attach_file('file', os.path.abspath(path))
     close_css = 'a.close-button'
     world.css_click(close_css)
 
@@ -58,7 +55,7 @@ def delete_file(_step, file_name):
     world.css_click(delete_css, index=index)
 
     prompt_confirm_css = 'li.nav-item > a.action-primary'
-    world.css_click(prompt_confirm_css)
+    world.css_click(prompt_confirm_css, success_condition=lambda: not world.css_visible(prompt_confirm_css))
 
 
 @step(u'I should see only one "([^"]*)"$')
@@ -80,6 +77,9 @@ def check_download(_step, file_name):
         r = get_file(file_name)
         downloaded_text = r.text
         assert cur_text == downloaded_text
+    #resetting the file back to its original state
+    with open(os.path.abspath(path), 'w') as cur_file:
+        cur_file.write("This is an arbitrary file for testing uploads")
 
 
 @step(u'I modify "([^"]*)"$')

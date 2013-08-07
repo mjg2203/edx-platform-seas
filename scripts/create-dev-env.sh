@@ -387,12 +387,12 @@ export WORKON_HOME=$PYTHON_DIR
 if [[ `type -t mkvirtualenv` != "function" ]]; then
     case `uname -s` in
         Darwin)
-            source `which virtualenvwrapper.sh`
+            VEWRAPPER=`which virtualenvwrapper.sh`
         ;;
 
         [Ll]inux)
         if [[ -f "/etc/bash_completion.d/virtualenvwrapper" ]]; then
-            source /etc/bash_completion.d/virtualenvwrapper
+            VEWRAPPER=/etc/bash_completion.d/virtualenvwrapper
         else
             error "Could not find virtualenvwrapper"
             exit 1
@@ -401,17 +401,18 @@ if [[ `type -t mkvirtualenv` != "function" ]]; then
     esac
 fi
 
+source $VEWRAPPER
 # Create edX virtualenv and link it to repo
 # virtualenvwrapper automatically sources the activation script
 if [[ $systempkgs ]]; then
-    mkvirtualenv -q -a "$HOME/.virtualenvs" --system-site-packages edx-platform || {
+    mkvirtualenv -q -a "$WORKON_HOME" --system-site-packages edx-platform || {
       error "mkvirtualenv exited with a non-zero error"
       return 1
     }
 else
     # default behavior for virtualenv>1.7 is
     # --no-site-packages
-    mkvirtualenv -q -a "$HOME/.virtualenvs" edx-platform || {
+    mkvirtualenv -q -a "$WORKON_HOME" edx-platform || {
       error "mkvirtualenv exited with a non-zero error"
       return 1
     }
@@ -443,7 +444,7 @@ fi
 # building correct version of distribute from source
 DISTRIBUTE_VER="0.6.28"
 output "Building Distribute"
-SITE_PACKAGES="$HOME/.virtualenvs/edx-platform/lib/python2.7/site-packages"
+SITE_PACKAGES="$WORKON_HOME/edx-platform/lib/python2.7/site-packages"
 cd "$SITE_PACKAGES"
 curl -sSLO http://pypi.python.org/packages/source/d/distribute/distribute-${DISTRIBUTE_VER}.tar.gz
 tar -xzvf distribute-${DISTRIBUTE_VER}.tar.gz
@@ -495,9 +496,9 @@ mkdir -p "$BASE/log"
 mkdir -p "$BASE/db"
 mkdir -p "$BASE/data"
 
-rake django-admin[syncdb,lms,dev,--noinput]
-rake django-admin[migrate]
-rake cms:update_templates
+./manage.py lms syncdb --noinput --migrate
+./manage.py cms syncdb --noinput --migrate
+
 # Configure Git
 
 output "Fixing your git default settings"
@@ -514,16 +515,11 @@ if [[ ! $quiet ]]; then
    environment. Ensure the following lines are added to your
    login script, and source your login script if needed:
 
-        source `which virtualenvwrapper.sh`
+        source $VEWRAPPER
 
    Then, every time you're ready to work on the project, just run
 
-        $ workon mitx
-
-   To initialize Django
-
-        $ rake django-admin[syncdb]
-        $ rake django-admin[migrate]
+        $ workon edx-platform
 
    To start the Django on port 8000
 
@@ -531,7 +527,7 @@ if [[ ! $quiet ]]; then
 
    Or to start Django on a different <port#>
 
-        $ rake django-admin[runserver,lms,dev,<port#>]
+        $ ./manage.py lms runserver <port#>
 
   If the  Django development server starts properly you
   should see:
