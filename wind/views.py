@@ -7,6 +7,8 @@ import requests
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
 from student.views import login_user
+from student.views import _do_create_account
+from student.views import activate_account
 
 from django.contrib.auth.models import User
 
@@ -39,8 +41,20 @@ def login(request):
 			try:
 				user = User.objects.get(email=content_array[1]+'@columbia.edu')
 			except User.DoesNotExist:
-				return HttpResponse("User does not exist!"); 
-
+				post_override = dict()
+				post_override['email'] = content_array[1]+'@columbia.edu'
+				post_override['name'] = content_array[1]
+				post_override['username'] = content_array[1]
+				post_override['password'] = 'secret'
+				post_override['terms_of_service'] = 'true'
+				post_override['honor_code'] = 'true'
+				#create_account(request, post_override)
+				ret = _do_create_account(post_override)
+				if isinstance(ret, HttpResponse):  # if there was an error then return that
+					return ret
+				(user, profile, registration) = ret
+				activate_account(request, registration.activation_key)
+			
 			request.POST = request.POST.copy()
 			
 			#newrequest = request.copy()
@@ -50,10 +64,12 @@ def login(request):
 			
 			request.POST['password'] = 'secret'
 
-
 			#return HttpResponse(content_array[1]+'@columbia.edu')
 			login_user(request)
 			return redirect(reverse('dashboard'))
+			#return HttpResponse("User does not exist!"); 
+
+			
 
 			#return HttpResponse('Validation Successful!<br />Contents of ticket validation response:<br />'+' '.join(content_array))
 		else:
@@ -63,3 +79,6 @@ def login(request):
     
 def fakewind(request):
 	return HttpResponse("Hello, world. You're at fake WIND.")
+
+def register(request):
+        return redirect("http://cvn.columbia.edu/");
