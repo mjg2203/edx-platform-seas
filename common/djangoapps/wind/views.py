@@ -12,6 +12,7 @@ from student.views import activate_account
 
 from django.contrib.auth.models import User
 
+from django.conf import settings
 
 
 
@@ -19,7 +20,7 @@ def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
     if 'ticketid' not in request.GET:
-        return redirect("http://400pixels.net/fakewind/fake_wind_page.php?destination=http://192.168.20.40:8000/login/")
+        return redirect(settings.WIND_LOGIN_URL + "/?destination=" + settings.WIND_DESTINATION)
         '''template = loader.get_template('wind/index.html')
         context = RequestContext(request, {})
         return HttpResponse(template.render(context))'''
@@ -32,7 +33,7 @@ def login(request):
         #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
         '''
         post_data = {'ticketid':request.GET.get('ticketid', '')}
-        result = requests.get('http://400pixels.net/fakewind/fake_wind_validation.php', params=post_data)
+        result = requests.get(settings.WIND_VALIDATION, params=post_data)
         content_array = result.text.split()
         #return HttpResponse(content_array[0]=='yes')
         

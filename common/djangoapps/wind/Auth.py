@@ -13,7 +13,7 @@ class SettingsBackend(object):
 
     def authenticate(self, windticket=None):
         post_data = {'ticketid':request.GET.get('ticketid', '')}
-		result = requests.get('http://400pixels.net/fakewind/fake_wind_validation.php', params=post_data)
+		result = requests.get(settings.WIND_VALIDATION, params=post_data)
 		content_array = result.text.split()
 		if content_array[0] == 'yes'
 			username = content_array[1]
