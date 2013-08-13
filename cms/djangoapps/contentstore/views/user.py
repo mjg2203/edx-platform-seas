@@ -26,6 +26,8 @@ from .access import has_access
 
 from student.views import enroll_in_course
 
+import datetime
+
 
 @login_required
 @ensure_csrf_cookie
@@ -62,12 +64,29 @@ def index(request):
             course.location.name
         )
 
+
+    todays_date = datetime.date.today();
+    if todays_date < datetime.date(todays_date.year, 2, 1):#year, month, day
+        course_run_values=[str(todays_date.year)+'_1', str(todays_date.year)+'_2']
+        course_run_texts=['Spring '+str(todays_date.year), 'Summer '+str(todays_date.year)]
+    elif todays_date < datetime.date(todays_date.year, 6, 11):
+        course_run_values=[str(todays_date.year)+'_2', str(todays_date.year)+'_3']
+        course_run_texts=['Summer '+str(todays_date.year), 'Fall '+str(todays_date.year)]
+    elif todays_date < datetime.date(todays_date.year, 9, 2):
+        course_run_values=[str(todays_date.year)+'_3', str(todays_date.year+1)+'_1']
+        course_run_texts=['Fall '+str(todays_date.year), 'Spring '+str(todays_date.year+1)]
+    else:
+        course_run_values=[str(todays_date.year+1)+'_1', str(todays_date.year+1)+'_2']
+        course_run_texts=['Spring '+str(todays_date.year+1), 'Summer '+str(todays_date.year+1)]
+
     return render_to_response('index.html', {
         'courses': [format_course_for_view(c) for c in courses if not isinstance(c, ErrorDescriptor)],
         'user': request.user,
         'request_course_creator_url': reverse('request_course_creator'),
         'course_creator_status': _get_course_creator_status(request.user),
-        'csrf': csrf(request)['csrf_token']
+        'csrf': csrf(request)['csrf_token'],
+        'course_run_values':course_run_values,
+        'course_run_texts':course_run_texts
     })
 
 
