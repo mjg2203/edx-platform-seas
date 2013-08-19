@@ -18,7 +18,7 @@ Vagrant.configure("2") do |config|
   # Make it so that network access from the vagrant guest is able to
   # use SSH private keys that are present on the host without copying
   # them into the VM.
-  config.ssh.forward_agent = true
+  # config.ssh.forward_agent = true
 
   config.vm.provider :virtualbox do |vb|
     # Use VBoxManage to customize the VM. For example to change memory:

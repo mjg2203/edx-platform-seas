@@ -23,7 +23,8 @@ urlpatterns = ('',  # nopep8
     # url(r'^login$', 'student.views.signin_user', name="signin_user"),
     url(r'^login/', 'wind.views.login', name="signin_user"),
     
-    url(r'^register$', 'student.views.register_user', name="register_user"),
+    #url(r'^register$', 'student.views.register_user', name="register_user"),
+    url(r'^register$', 'wind.views.register', name="register_user"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
@@ -446,7 +447,7 @@ if settings.MITX_FEATURES.get('ENABLE_HINTER_INSTRUCTOR_VIEW'):
     )
 
 # enable automatic login
-if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_LOAD_TESTING'):
+if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
     urlpatterns += (
         url(r'^auto_auth$', 'student.views.auto_auth'),
     )

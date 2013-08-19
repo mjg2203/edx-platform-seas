@@ -61,6 +61,7 @@ class UserProfile(models.Model):
     # This is not visible to other users, but could introduce holes later
     user = models.OneToOneField(User, unique=True, db_index=True, related_name='profile')
     name = models.CharField(blank=True, max_length=255, db_index=True)
+    #uni = models.CharField(blank=True, max_length=100, db_index=True)
 
     meta = models.TextField(blank=True)  # JSON dictionary for future expansion
     courseware = models.CharField(blank=True, max_length=255, default='course.xml')
@@ -370,7 +371,7 @@ class TestCenterRegistration(models.Model):
     accommodation_code = models.CharField(max_length=64, blank=True)
 
     # store the original text of the accommodation request.
-    accommodation_request = models.CharField(max_length=1024, blank=True, db_index=True)
+    accommodation_request = models.CharField(max_length=1024, blank=True, db_index=False)
 
     # time at which edX sent the registration to the test center
     uploaded_at = models.DateTimeField(null=True, db_index=True)
