@@ -1,6 +1,0 @@
-TODO:
-Create a route at /login
--> have that be page that redirects to wind
-
-route called /logincheck
--> accepts ticket and validates with CU server
