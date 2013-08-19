@@ -19,6 +19,7 @@ from courseware.masquerade import is_masquerading_as_student
 from django.utils.timezone import UTC
 
 DEBUG_ACCESS = False
+CVN_REGISTERED_GROUP_NAME = 'cvn_registered_group'
 
 log = logging.getLogger(__name__)
 
@@ -141,6 +142,11 @@ def _has_access_course_desc(user, course, action):
         (CourseEnrollmentAllowed always overrides)
         (staff can always enroll)
         """
+
+        if user is not None and user.groups.filter(name=CVN_REGISTERED_GROUP_NAME).count() == 0:
+            return False
+
+
         # if using registration method to restrict (say shibboleth)
         if settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
             if user is not None and user.is_authenticated() and \
