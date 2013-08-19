@@ -82,4 +82,4 @@ def fakewind(request):
     return HttpResponse("Hello, world. You're at fake WIND.")
 
 def register(request):
-        return redirect("http://cvn.columbia.edu/");
+    return redirect("http://cvn.columbia.edu/");
