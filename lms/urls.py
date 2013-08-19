@@ -25,8 +25,7 @@ urlpatterns = ('',  # nopep8
     
     
     #url(r'^register$', 'student.views.register_user', name="register_user"),
-    #url(r'^register$', 'wind.views.register', name="register_user"),
-    url(r'^register$', 'student.views.signin_user', name="register_user"),
+    url(r'^register$', 'wind.views.register', name="register_user"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
