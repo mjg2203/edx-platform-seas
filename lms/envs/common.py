@@ -742,7 +742,6 @@ INSTALLED_APPS = (
 
     # External auth (OpenID, shib)
     'external_auth',
-    'django_openid_auth',
 
     #For the wiki
     'wiki',  # The new django-wiki from benjaoming
