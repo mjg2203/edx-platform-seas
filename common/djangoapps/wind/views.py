@@ -1,6 +1,8 @@
 # Create your views here.
 from django.http import HttpResponse
 from django.template import RequestContext, loader
+from django.contrib.auth.decorators import login_required
+from django_future.csrf import ensure_csrf_cookie
 import urllib
 import urllib2
 import requests
@@ -10,11 +12,16 @@ from student.views import login_user
 from student.views import _do_create_account
 from student.views import activate_account
 
+from student.models import UserProfile
+
 from django.contrib.auth.models import User
 
 from django.conf import settings
 
-
+from ims_lti_py import ToolConsumer, ToolConfig,\
+        OutcomeRequest, OutcomeResponse
+import hashlib
+from student.views import course_from_id
 
 def login(request):
     if request.user.is_authenticated():
@@ -83,3 +90,66 @@ def fakewind(request):
 
 def register(request):
     return redirect("http://cvn.columbia.edu/");
+
+LTI_LAUNCH_URL = 'https://piazza.com/connect'
+LTI_CONSUMER_KEY = 'piazza.sandbox'
+LTI_CONSUMER_SECRET = 'test_only_secret'
+
+@login_required
+@ensure_csrf_cookie
+def piazza_test(request, course_id):
+    # Create a new tool configuration
+    config = ToolConfig(title = 'Piazza',
+            launch_url = LTI_LAUNCH_URL)
+
+    # Create tool consumer using LTI!
+    consumer = ToolConsumer(LTI_CONSUMER_KEY,
+            LTI_CONSUMER_SECRET)
+    consumer.set_config(config)
+
+    
+    #retrieve user and course models
+    user = User.objects.prefetch_related("groups").get(id=request.user.id)
+    userProfile = UserProfile.objects.get(user_id=user.id)
+    course = course_from_id(course_id)
+
+    #check for permissions to determine what role to pass to Piazza.com through 
+    piazza_role = ''
+    if user.groups.filter(name=('instructor_'+course_id)).count() != 0 or request.user.is_staff:
+        piazza_role = 'Instructor'
+    elif user.groups.filter(name=('staff_'+course_id)).count() != 0:
+        piazza_role = 'Staff'
+    else:
+        piazza_role = 'Learner'
+
+    # Set some launch data from: http://www.imsglobal.org/LTI/v1p1pd/ltiIMGv1p1pd.html#_Toc309649684
+    consumer.resource_link_id = course_id
+    consumer.lis_person_contact_email_primary = user.email
+    consumer.lis_person_name_full = str(userProfile.name)
+    hash = hashlib.md5()
+    hash.update(str(userProfile.user_id))
+    consumer.user_id = hash.hexdigest()
+    #TODO: check if user is is_staff, student, professor, or staff and set the role appropriately
+    #consumer.roles = 'Learner'
+    consumer.roles = piazza_role
+    consumer.context_id = course_id
+    consumer.context_title = course.display_name_with_default
+    consumer.context_label = course.number.replace('_', ' ')
+    consumer.tool_consumer_instance_guid = 'lms.cvn.columbia.edu'
+    consumer.tool_consumer_instance_description = 'Columbia University'
+ 
+
+    launch_data = consumer.generate_launch_data()
+    launch_url = consumer.launch_url
+    
+
+    #render a self-submitting form that sends all data to Piazza.com via the LTI standard
+    returnable = '<form id="ltiLaunchFormSubmitArea" action="' + launch_url + '" name="ltiLaunchForm" id="ltiLaunchForm" method="post" encType="application/x-www-form-urlencoded">'
+    for key in launch_data:
+        returnable += '<input type="hidden" name="'+ key +'" value="'+ str(launch_data[key]) + '"/>'
+    returnable += '<input type="submit" value="Go to Piazza"></input>'
+    returnable += '</form>'
+    returnable += '<script language="javascript">document.getElementById("ltiLaunchFormSubmitArea").style.display = "none";document.ltiLaunchForm.submit();</script>'
+    return HttpResponse(returnable)
+    result = requests.post(launch_url, params=launch_data)
+    return HttpResponse(result.text)

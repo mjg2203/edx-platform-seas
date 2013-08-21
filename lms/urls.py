@@ -23,7 +23,10 @@ urlpatterns = ('',  # nopep8
     # url(r'^login$', 'student.views.signin_user', name="signin_user"),
     url(r'^login/', 'wind.views.login', name="signin_user"),
     
-    
+    #url(r'^piazzatest/', 'wind.views.piazza_test', name="piazza_test"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'wind.views.piazza_test', name="piazza_discussion"),
+    #url(r'^courses/(?P<org>[^/]+)/(?P<course>[^/]+)(?P<name>[^/]+)/discussion', 'wind.views.piazza_test', name="piazza_test"), 
+
     #url(r'^register$', 'student.views.register_user', name="register_user"),
     url(r'^register$', 'wind.views.register', name="register_user"),
 
