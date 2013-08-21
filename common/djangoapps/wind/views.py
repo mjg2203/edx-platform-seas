@@ -27,7 +27,7 @@ def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
     if 'ticketid' not in request.GET:
-        return redirect(settings.WIND_LOGIN_URL + "/?destination=" + settings.WIND_DESTINATION)
+        return redirect(settings.WIND_LOGIN_URL + "?destination=" + settings.WIND_DESTINATION)
         '''template = loader.get_template('wind/index.html')
         context = RequestContext(request, {})
         return HttpResponse(template.render(context))'''
