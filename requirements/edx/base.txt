@@ -90,3 +90,4 @@ django-debug-toolbar-mongo
 nose-ignore-docstring
 
 git+https://github.com/mfogel/django-settings-context-processor.git
+git+https://github.com/tophatmonocle/ims_lti_py.git
