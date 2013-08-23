@@ -11,27 +11,31 @@ from django.core.urlresolvers import reverse
 from student.views import login_user
 from student.views import _do_create_account
 from student.views import activate_account
+from mitxmako.shortcuts import render_to_response
 
 from student.models import UserProfile
+from student.models import CourseEnrollment
 
 from django.contrib.auth.models import User
 
 from django.conf import settings
+
+import re
 
 from ims_lti_py import ToolConsumer, ToolConfig,\
         OutcomeRequest, OutcomeResponse
 import hashlib
 from student.views import course_from_id
 
+from django.db import connection, connections, transaction
+
+import time
+
+
 def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
-    if 'ticketid' not in request.GET:
-        return redirect(settings.WIND_LOGIN_URL + "/?destination=" + settings.WIND_DESTINATION)
-        '''template = loader.get_template('wind/index.html')
-        context = RequestContext(request, {})
-        return HttpResponse(template.render(context))'''
-    else:
+    if 'ticketid' in request.GET:
         '''
         post_data = [('ticketid',request.GET.get('ticketid', '')),]     # a sequence of two element tuples
         result = urllib2.urlopen('http://400pixels.net/fakewind/fake_wind_validation.php?'+urllib.urlencode(post_data))
@@ -47,7 +51,7 @@ def login(request):
         #return redirect(reverse('dashboard'))
         if (content_array[0] == 'yes'):
             try:
-                user = User.objects.get(email=content_array[1]+'@columbia.edu')
+                user = User.objects.prefetch_related("groups").get(email=content_array[1]+'@columbia.edu')
             except User.DoesNotExist:
                 post_override = dict()
                 post_override['email'] = content_array[1]+'@columbia.edu'
@@ -74,6 +78,15 @@ def login(request):
 
             #return HttpResponse(content_array[1]+'@columbia.edu')
             login_user(request)
+
+            #if user is a professor, redirect them to cms
+            user_groups = [g.name for g in user.groups.all()]
+            pattern = re.compile("instructor|staff")
+            returnable = ''
+            for user_group in user_groups:
+                if pattern.match(user_group):
+                    return redirect('http://192.168.20.40:8001/')
+
             return redirect(reverse('dashboard'))
             #return HttpResponse("User does not exist!"); 
 
@@ -83,7 +96,71 @@ def login(request):
         else:
             return HttpResponse('Validation Failed!<br />Contents of ticket validation response:<br />'+content_array[0])
             #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
-        
+    elif 'email' in request.POST and 'first' in request.POST and 'last' in request.POST and 'token' in request.POST:
+        '''
+        User is logging in via the old PHP CVN web app
+        available POST variables: email, first, last, token
+        '''
+        cursor = connections['cvn_php'].cursor()
+
+        # Data retrieval operation - no commit required
+        cursor.execute("SELECT unix_timestamp(created), email, token FROM django_auth_hack WHERE email=%s AND token=%s", [request.POST['email'], request.POST['token']])
+        row = cursor.fetchone()
+        if row is not None and row[0] > int(time.time())-86400:
+            #if token has been found in database and was created less than 1 day ago
+            #return HttpResponse(str(row[0])+' '+str(row[1])+' '+str(row[2])+' Current Timestamp:'+str(int(time.time())))
+            
+            try:
+                user = User.objects.prefetch_related("groups").get(email=str(row[1]))
+            except User.DoesNotExist:
+                post_override = dict()
+                post_override['email'] = str(row[1])
+                post_override['name'] = request.POST['first']+' '+request.POST['last']
+                post_override['username'] = str(row[1])
+                post_override['password'] = 'secret'
+                post_override['terms_of_service'] = 'true'
+                post_override['honor_code'] = 'true'
+                #create_account(request, post_override)
+                ret = _do_create_account(post_override)
+                if isinstance(ret, HttpResponse):  # if there was an error then return that
+                    return ret
+                (user, profile, registration) = ret
+                activate_account(request, registration.activation_key)
+            
+            request.POST = request.POST.copy()
+            
+            #newrequest = request.copy()
+            #request.POST = dict()
+            
+            request.POST['email'] = str(row[1])
+            
+            request.POST['password'] = 'secret'
+
+            #return HttpResponse(content_array[1]+'@columbia.edu')
+            login_user(request)
+
+            #if user is a professor, redirect them to cms
+            user_groups = [g.name for g in user.groups.all()]
+            pattern = re.compile("instructor|staff")
+            returnable = ''
+            for user_group in user_groups:
+                if pattern.match(user_group):
+                    return redirect('http://192.168.20.40:8001/')
+
+            return redirect(reverse('dashboard'))
+        else:
+            return HttpResponse("External Authentication Failed!")
+        #return HttpResponse('wa!')
+    else:
+        '''
+        No post or get requests, so redirect user to Columbia WIND login
+        '''
+        return redirect(settings.WIND_LOGIN_URL + "/?destination=" + settings.WIND_DESTINATION)
+        '''template = loader.get_template('wind/index.html')
+        context = RequestContext(request, {})
+        return HttpResponse(template.render(context))'''
+
+
     
 def fakewind(request):
     return HttpResponse("Hello, world. You're at fake WIND.")
@@ -153,3 +230,36 @@ def piazza_test(request, course_id):
     return HttpResponse(returnable)
     result = requests.post(launch_url, params=launch_data)
     return HttpResponse(result.text)
+
+def course_dashboard(request, org, course, name):
+    #TODO: display course roster for a class
+    #CourseEnrollment.get(user=request.user.id)
+    #user = User.objects.get(id=request.user.id)
+    #userProfile = UserProfile.objects.get(user_id=user.id)
+    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
+    returnable = ''
+    for courseEnrollment in courseEnrollments:
+        #user = User.objects.get(...
+        returnable += str(courseEnrollment.user.username)+'<br />'
+    return HttpResponse(returnable)
+    return HttpResponse("Welcome to the professor dashboard!")
+
+@login_required
+@ensure_csrf_cookie
+def course_dashboard(request, org, course, name):
+    """
+    Display an editable asset library
+
+    org, course, name: Attributes of the Location for the item to edit
+    """
+    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
+    '''
+    returnable = ''
+    for courseEnrollment in courseEnrollments:
+        #user = User.objects.get(...
+        returnable += str(courseEnrollment.user.username)+'<br />'
+    return HttpResponse(returnable)
+    return HttpResponse("Welcome to the professor dashboard!")
+    '''
+
+    return render_to_response('dashboard_index.html', {'courseEnrollments':courseEnrollments})
