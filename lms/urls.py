@@ -21,7 +21,8 @@ urlpatterns = ('',  # nopep8
     url(r'^dashboard$', 'student.views.dashboard', name="dashboard"),
     
     # url(r'^login$', 'student.views.signin_user', name="signin_user"),
-    url(r'^login/', 'wind.views.login', name="signin_user"),
+    url(r'^login/$', 'wind.views.login', name="signin_user"),
+    #url(r'^oldlogin/', 'wind.views.oldlogin', name="old_signin_user"),
     
     #url(r'^piazzatest/', 'wind.views.piazza_test', name="piazza_test"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'wind.views.piazza_test', name="piazza_discussion"),
@@ -43,7 +44,7 @@ urlpatterns = ('',  # nopep8
 
 
     #url(r'^accounts/login$', 'student.views.accounts_login', name="accounts_login"),
-    url(r'^accounts/login$', 'wind.views.login', name="accounts_login"),
+    #url(r'^accounts/login$', 'wind.views.login', name="accounts_login"),
     
 
     #url(r'^login_ajax$', 'student.views.login_user', name="login"),

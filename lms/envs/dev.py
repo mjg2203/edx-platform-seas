@@ -52,6 +52,13 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ENV_ROOT / "db" / "mitx.db",
+    },
+    'cvn_php': {
+        "HOST": 'finch.cvn.columbia.edu',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'joaquin',
+        'USER': 'joaquin',
+        'PASSWORD': 'os7IgxsdHUfUXGyiGi0M'
     }
 }
 
