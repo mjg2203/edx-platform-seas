@@ -1,0 +1,129 @@
+<%inherit file="base.html" />
+<%! from django.core.urlresolvers import reverse %>
+<%! from django.utils.translation import ugettext as _ %>
+<%! from student.models import UserProfile %>
+<%block name="bodyclass">is-signedin course dashboard</%block>
+<%block name="title">${_("Course Dashboard")}</%block>
+
+<%namespace name='static' file='static_content.html'/>
+
+<%block name="jsextra">
+<script src="${static.url('js/vendor/mustache.js')}"></script>
+</%block>
+
+<%block name="header_extras">
+<style type="text/css">
+ table td, table th {
+ 	border:1px solid #000
+ }
+ table th {
+ 	font-weight:bold
+ }
+</style>
+</%block>
+
+
+<%block name="content">
+
+  <script type="text/template" id="new-asset-element">
+    <tr data-id='{{url}}'>
+      <td class="thumb-col">
+        <div class="thumb">
+          {{#thumb_url}}
+          <img src="{{thumb_url}}">
+          {{/thumb_url}}
+        </div>
+      </td>
+      <td class="name-col">
+        <a data-tooltip="Open/download this file" href="{{url}}" class="filename">{{displayname}}</a>
+        <div class="embeddable-xml"></div>
+      </td>
+      <td class="date-col">
+        {{uploadDate}}
+      </td>
+      <td class="embed-col">
+        <input type="text" class="embeddable-xml-input" value='{{portable_url}}' readonly>
+      </td>
+      <td class="delete-col">
+        <a href="#" data-tooltip="${_('Delete this asset')}" class="remove-asset-button"><span class="delete-icon"></span></a>
+      </td>
+    </tr>
+  </script>
+
+  <div class="wrapper-mast wrapper">
+    <header class="mast has-actions has-subtitle">
+      <h1 class="page-header">
+        <small class="subtitle">Content</small>
+        <span class="sr">&gt; </span>${_("Course Dashboard")}
+      </h1>
+
+      <!--nav class="nav-actions">
+        <h3 class="sr">Page Actions</h3>
+        <ul>
+          <li class="nav-item">
+            <a href="#" class="button upload-button new-button"><i class="icon-plus"></i> ${_("Upload New File")}</a>
+          </li>
+        </ul>
+      </nav-->
+    </header>
+    <div class="main-wrapper">
+      <h2>Quick Links:</h2>
+      <a href="${reverse('course_index', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-edit"></i> ${_("Edit Lectures")}</a>
+      <br />
+      <a href="${reverse('course_info', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-bullhorn"></i> ${_("Make an Announcement")}</a>
+       <br />
+      <a href="${reverse('edit_tabs', kwargs=dict(org=course_reference.org, course=course_reference.course, coursename=course_reference.name))}" class="button view-button view-live-button"><i class="icon-file"></i> ${_("Edit Static Pages")}</a>
+      <br />
+      <a href="${reverse('asset_index', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-folder-open"></i> ${_("View and Upload Files")}</a>
+      <br />
+      <a target="_blank" href="${reverse('piazza_discussion', kwargs=dict(course_id=course_reference.org+'/'+course_reference.course+'/'+course_reference.name))}" class="button view-button view-live-button"><i class="icon-comments"></i> ${_("Join the Discussion on Piazza")}</a>
+      </br></br>
+      <h2>Class Roster:</h2>
+      <table class="stat_table" style="background-color:#fff" border="1">
+      <tbody>
+        <tr>
+          <th style="width:150px">UNI</th>
+          <th style="width:300px">Name</th>
+          <th style="width:300px">Email</th>
+        </tr>
+      % for courseEnrollment in courseEnrollments:
+        <tr>
+          <td>${str(courseEnrollment.user.username)}</td>
+          <td>${str(UserProfile.objects.get(user_id=courseEnrollment.user.id).name)}</td>
+          <td><a href="mailto:${str(courseEnrollment.user.email)}">${str(courseEnrollment.user.email)}</a></td>
+        </tr>
+      % endfor
+      </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="main-wrapper">
+    <div class="inner-wrapper">
+      <div class="page-actions">
+        <input type="text" class="asset-search-input search wip-box" placeholder="search assets" style="display:none"/>
+      </div>
+      
+    </div>
+  </div>
+
+
+</%block>
+
+<%block name="view_alerts">
+<!-- alert: save confirmed with close -->
+<div class="wrapper wrapper-alert wrapper-alert-confirmation" role="status">
+  <div class="alert confirmation">
+    <i class="icon-ok"></i>
+
+    <div class="copy">
+      <h2 class="title title-3">${_('Your file has been deleted.')}</h2>
+    </div>
+
+    <a href="" rel="view" class="action action-alert-close">
+      <i class="icon-remove-sign"></i>
+      <span class="label">${_('close alert')}</span>
+    </a>
+  </div>
+</div>
+</%block>

@@ -10,7 +10,11 @@
     <div class="outer-wrapper">
       <div class="title">
         <hgroup>
-          <h1><strong>Columbia Engineering</strong></h1>
+          <h1>Welcome to the new CVN Student Center.</h1>
+          <div style="margin-top:30px">
+            <a class="cta cta-login m-btn-primary" style="padding:20px 40px; color:#fff" href="${reverse('signin_user')}">Log in with UNI</a>
+            <a class="cta cta-login m-btn-primary" style="padding:20px 40px; color:#fff" href="https://web.cvn.columbia.edu/www6/sc/login.php">Log in through CVN</a>
+          </div>
         </hgroup>
 
         ## Disable social buttons for non-edX sites
@@ -41,7 +45,7 @@
   </header>
 
   <section class="container">
-    <section class="highlighted-courses">
+    <!-- section class="highlighted-courses">
       ## Disable university partner logos and sites for non-edX sites
       % if not self.theme_enabled():
         <h2>${_('Explore free courses from {span_start}{platform_name}{span_end} universities').format(platform_name="edX", span_start='<span class="edx">', span_end='</span>')}</h2>
@@ -162,7 +166,7 @@
           %endfor
           </ul>
       </section>
-    </section>
+    </section -->
   </section>
 </section>
 
