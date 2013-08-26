@@ -18,3 +18,14 @@ msgstr ""
 # empty
 msgid "This is a key string."
 msgstr ""
+
+msgid "Outline"
+msgstr "Lectures"
+
+#: cms/templates/overview.html:8 cms/templates/overview.html:128
+msgid "Course Outline"
+msgstr "Lectures"
+
+#: /courses/SEAS/INTRO_W1001/2013_3/about
+msgid "Enrollment is closed"
+msgstr "Please register through Columbia Video Network at <a style='color:#000;' href='http://cvn.columbia.edu/'>cvn.columbia.edu</a>"
