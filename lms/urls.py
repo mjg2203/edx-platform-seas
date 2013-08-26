@@ -30,10 +30,13 @@ urlpatterns = ('',  # nopep8
 
     #url(r'^register$', 'student.views.register_user', name="register_user"),
     url(r'^register$', 'wind.views.register', name="register_user"),
+    
+    url(r'^password_reset/$', 'student.views.dashboard', name='password_reset'),
+    url(r'^change_email$', 'student.views.dashboard', name="change_email"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
-    url(r'^change_email$', 'student.views.change_email_request', name="change_email"),
+    #url(r'^change_email$', 'student.views.change_email_request', name="change_email"),
     url(r'^email_confirm/(?P<key>[^/]*)$', 'student.views.confirm_email_change'),
     url(r'^change_name$', 'student.views.change_name_request', name="change_name"),
     url(r'^accept_name_change$', 'student.views.accept_name_change'),
@@ -56,7 +59,7 @@ urlpatterns = ('',  # nopep8
     url(r'^begin_exam_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)$', 'student.views.begin_exam_registration', name="begin_exam_registration"),
     url(r'^create_exam_registration$', 'student.views.create_exam_registration'),
 
-    url(r'^password_reset/$', 'student.views.password_reset', name='password_reset'),
+    #url(r'^password_reset/$', 'student.views.password_reset', name='password_reset'),
     ## Obsolete Django views for password resets
     ## TODO: Replace with Mako-ized views
     url(r'^password_change/$', django.contrib.auth.views.password_change,

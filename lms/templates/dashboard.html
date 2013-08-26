@@ -34,6 +34,7 @@
       }
     });
 
+    /*
     $('#pwd_reset_button').click(function() {
       $.post('${reverse("password_reset")}',
              {"email"  : $('#id_email').val()},
@@ -41,7 +42,9 @@
                $("#password_reset_complete_link").click();
              });
     });
+    */
 
+    /*
     $("#change_email_form").submit(function(){
       var new_email = $('#new_email_field').val();
       var new_password = $('#new_email_password').val();
@@ -60,7 +63,7 @@
                  }
                });
       return false;
-    });
+    });*/
 
     $("#change_name_form").submit(function(){
       var new_name = $('#new_name_field').val();
@@ -103,19 +106,19 @@
         <li>
           <span class="title"><div class="icon email-icon"></div>${_("Email")}
             % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
-            (<a href="#change_email" rel="leanModal" class="edit-email">${_("edit")}</a>)
+            <!--(<a href="#change_email" rel="leanModal" class="edit-email">${_("edit")}</a>)-->
             % endif
           </span> <span class="data">${ user.email | h }</span>
         </li>
 
         % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
-        <li>
+        <!--li>
           <span class="title"><a href="#password_reset_complete" rel="leanModal" id="pwd_reset_button">${_("Reset Password")}</a></span>
           <form id="password_reset_form" method="post" data-remote="true" action="${reverse('password_reset')}">
             <input id="id_email" type="hidden" name="email" maxlength="75" value="${user.email}" />
             <!-- <input type="submit" id="pwd_reset_button" value="${_('Reset Password')}" /> -->
           </form>
-        </li>
+        </li-->
         % endif
 
       </ul>
