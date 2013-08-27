@@ -59,7 +59,7 @@ GITHUB_REPO_ROOT = ENV_ROOT / "data"
 
 
 XQUEUE_INTERFACE = {
-    "url": "http://sandbox-xqueue.edx.org",
+    "url": "http://example.com",
     "django_auth": {
         "username": "lms",
         "password": "***REMOVED***"

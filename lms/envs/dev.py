@@ -93,7 +93,7 @@ CACHES = {
 
 
 XQUEUE_INTERFACE = {
-    "url": "https://sandbox-xqueue.edx.org",
+    "url": "https://example.com",
     "django_auth": {
         "username": "lms",
         "password": "***REMOVED***"
