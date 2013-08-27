@@ -54,11 +54,11 @@ DATABASES = {
         'NAME': ENV_ROOT / "db" / "mitx.db",
     },
     'cvn_php': {
-        "HOST": 'finch.cvn.columbia.edu',
+        "HOST": 'example.com',
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'joaquin',
         'USER': 'joaquin',
-        'PASSWORD': 'os7IgxsdHUfUXGyiGi0M'
+        'PASSWORD': 'PASSWORD_REDACTED'
     }
 }
 
