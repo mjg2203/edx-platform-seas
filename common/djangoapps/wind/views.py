@@ -36,8 +36,6 @@ def login(request):
     reqData = request.POST
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
-    elif 'email' in reqData and reqData['email'].split('@')[1]=='columbia.edu':
-        return redirect(reverse('signin_user'))
     if 'ticketid' in request.GET:
         '''
         post_data = [('ticketid',request.GET.get('ticketid', '')),]     # a sequence of two element tuples
