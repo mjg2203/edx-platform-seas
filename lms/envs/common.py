@@ -814,7 +814,3 @@ def enable_theme(theme_name):
     # avoid collisions with default edX static files
     STATICFILES_DIRS.append((u'themes/%s' % theme_name,
                              theme_root / 'static'))
-
-
-###################### WIND ############
-INSTALLED_APPS += ('wind','cvn')

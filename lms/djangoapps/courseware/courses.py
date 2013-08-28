@@ -18,6 +18,8 @@ from static_replace import replace_static_urls
 from courseware.access import has_access
 import branding
 
+import urllib2
+
 log = logging.getLogger(__name__)
 
 
@@ -87,8 +89,11 @@ def course_image_url(course):
     else:
         loc = course.location._replace(tag='c4x', category='asset', name='images_course_image.jpg')
         path = StaticContent.get_url_path_from_location(loc)
-        return path
-
+        try:
+            f = urllib2.urlopen(urllib2.Request(build_absolute_uri(path)))
+            return path
+        except:
+            return '/static/images/columbia_logo.png'
 
 def find_file(fs, dirs, filename):
     """

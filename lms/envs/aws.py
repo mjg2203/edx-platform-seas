@@ -242,6 +242,8 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(CELERY_BROKER_TRANSPORT,
                                             CELERY_BROKER_HOSTNAME,
                                             CELERY_BROKER_VHOST)
 
+###################### CVN ############
+INSTALLED_APPS += ('wind','cvn')
 FORCE_SCRIPT_NAME = ENV_TOKENS.get("FORCE_SCRIPT_NAME")
 WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
 WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")

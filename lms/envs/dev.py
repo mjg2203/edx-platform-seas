@@ -284,7 +284,7 @@ except ImportError:
 
 
 ######################WIND############
-INSTALLED_APPS += ('wind',)
+INSTALLED_APPS += ('wind', 'cvn')
 WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
 WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")
 WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")
