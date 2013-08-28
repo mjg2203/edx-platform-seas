@@ -86,7 +86,7 @@ def login(request):
             returnable = ''
             for user_group in user_groups:
                 if pattern.match(user_group):
-                    return redirect('http://192.168.20.40:8001/')
+                    return redirect(settings.CMS_URL)
 
             return redirect(reverse('dashboard'))
             #return HttpResponse("User does not exist!"); 

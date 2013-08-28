@@ -1,6 +1,7 @@
 <%! from django.utils.translation import ugettext as _ %>
 
 <%! from django.core.urlresolvers import reverse %>
+<%! from django.conf import settings %>
 <%! from time import strftime %>
 <%inherit file="main.html" />
 <%namespace name='static' file='static_content.html'/>
@@ -14,7 +15,7 @@
           <div style="margin-top:30px; text-align:center">
             <a class="cta cta-login m-btn-primary" style="padding:20px 40px; color:#fff; display:block; margin-bottom:20px" href="${reverse('signin_user')}">Log in with UNI</a>
             If you haven't yet obtained a Columbia UNI:
-            <a class="cta cta-login" style="padding:0px 0px; color:#00c; display:block; margin-top:10px" href="https://web.cvn.columbia.edu/www6/sc/login.php">Log in through CVN</a>
+            <a class="cta cta-login" style="padding:0px 0px; color:#00c; display:block; margin-top:10px" href="${settings.CVN_SC_URL}">Log in through CVN</a>
           </div>
         </hgroup>
 
