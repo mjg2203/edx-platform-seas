@@ -33,6 +33,7 @@ import time
 
 
 def login(request):
+    reqData = request.POST
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
     elif 'email' in reqData and reqData['email'].split('@')[1]=='columbia.edu':
@@ -98,7 +99,6 @@ def login(request):
         else:
             return HttpResponse('Validation Failed!<br />Contents of ticket validation response:<br />'+content_array[0])
             #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
-    reqData = request.POST
     elif 'email' in reqData and 'first' in reqData and 'last' in reqData and 'token' in reqData:
         '''
         User is logging in via the old PHP CVN web app
