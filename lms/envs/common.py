@@ -502,6 +502,7 @@ MIDDLEWARE_CLASSES = (
 
     # catches any uncaught RateLimitExceptions and returns a 403 instead of a 500
     'ratelimitbackend.middleware.RateLimitMiddleware',
+    'wind.middleware.DisableCSRF',
 )
 
 ############################### Pipeline #######################################
