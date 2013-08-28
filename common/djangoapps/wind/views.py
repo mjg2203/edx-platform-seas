@@ -35,6 +35,8 @@ import time
 def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
+    elif 'email' in reqData and reqData['email'].split('@')[1]=='columbia.edu':
+        return redirect(reverse('signin_user'))
     if 'ticketid' in request.GET:
         '''
         post_data = [('ticketid',request.GET.get('ticketid', '')),]     # a sequence of two element tuples
@@ -96,15 +98,16 @@ def login(request):
         else:
             return HttpResponse('Validation Failed!<br />Contents of ticket validation response:<br />'+content_array[0])
             #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
-    elif 'email' in request.POST and 'first' in request.POST and 'last' in request.POST and 'token' in request.POST:
+    reqData = request.POST
+    elif 'email' in reqData and 'first' in reqData and 'last' in reqData and 'token' in reqData:
         '''
         User is logging in via the old PHP CVN web app
-        available POST variables: email, first, last, token
+        available GET variables: email, first, last, token
         '''
         cursor = connections['cvn_php'].cursor()
 
         # Data retrieval operation - no commit required
-        cursor.execute("SELECT unix_timestamp(created), email, token FROM django_auth_hack WHERE email=%s AND token=%s", [request.POST['email'], request.POST['token']])
+        cursor.execute("SELECT unix_timestamp(created), email, token FROM django_auth_hack WHERE email=%s AND token=%s", [reqData['email'], reqData['token']])
         row = cursor.fetchone()
         if row is not None and row[0] > int(time.time())-86400:
             #if token has been found in database and was created less than 1 day ago
@@ -115,7 +118,7 @@ def login(request):
             except User.DoesNotExist:
                 post_override = dict()
                 post_override['email'] = str(row[1])
-                post_override['name'] = request.POST['first']+' '+request.POST['last']
+                post_override['name'] = reqData['first']+' '+reqData['last']
                 post_override['username'] = str(row[1])
                 post_override['password'] = 'secret'
                 post_override['terms_of_service'] = 'true'
@@ -145,7 +148,7 @@ def login(request):
             returnable = ''
             for user_group in user_groups:
                 if pattern.match(user_group):
-                    return redirect('http://192.168.20.40:8001/')
+                    return redirect(settings.CMS_URL)
 
             return redirect(reverse('dashboard'))
         else:
