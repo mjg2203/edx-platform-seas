@@ -54,11 +54,11 @@ DATABASES = {
         'NAME': ENV_ROOT / "db" / "mitx.db",
     },
     'cvn_php': {
-        "HOST": 'finch.cvn.columbia.edu',
+        "HOST": 'example.com',
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'joaquin',
         'USER': 'joaquin',
-        'PASSWORD': 'os7IgxsdHUfUXGyiGi0M'
+        'PASSWORD': 'PASSWORD_REDACTED'
     }
 }
 
@@ -93,7 +93,7 @@ CACHES = {
 
 
 XQUEUE_INTERFACE = {
-    "url": "https://sandbox-xqueue.edx.org",
+    "url": "https://example.com",
     "django_auth": {
         "username": "lms",
         "password": "***REMOVED***"

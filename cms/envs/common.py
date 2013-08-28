@@ -181,9 +181,9 @@ IGNORABLE_404_ENDS = ('favicon.ico')
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'registration@edx.org'
-DEFAULT_FEEDBACK_EMAIL = 'feedback@edx.org'
-SERVER_EMAIL = 'devops@edx.org'
+DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
+DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
+SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
 ADMINS = ()
 MANAGERS = ADMINS
 

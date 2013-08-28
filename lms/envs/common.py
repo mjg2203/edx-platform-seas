@@ -77,7 +77,7 @@ MITX_FEATURES = {
 
     'ENABLE_PSYCHOMETRICS': False,  # real-time psychometrics (eg item response theory analysis in instructor dashboard)
 
-    'ENABLE_DJANGO_ADMIN_SITE': False,  # set true to enable django's admin site, even on prod (e.g. for course ops)
+    'ENABLE_DJANGO_ADMIN_SITE': True,  # set true to enable django's admin site, even on prod (e.g. for course ops)
     'ENABLE_SQL_TRACKING_LOGS': False,
     'ENABLE_LMS_MIGRATION': False,
     'ENABLE_MANUAL_GIT_RELOAD': False,
@@ -349,20 +349,20 @@ USE_TZ = True
 
 # Site info
 SITE_ID = 1
-SITE_NAME = "edx.org"
+SITE_NAME = "lms.cvn.columbia.edu"
 HTTPS = 'on'
 ROOT_URLCONF = 'lms.urls'
 IGNORABLE_404_ENDS = ('favicon.ico')
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'registration@edx.org'
-DEFAULT_FEEDBACK_EMAIL = 'feedback@edx.org'
-SERVER_EMAIL = 'devops@edx.org'
-TECH_SUPPORT_EMAIL = 'technical@edx.org'
-CONTACT_EMAIL = 'info@edx.org'
-BUGS_EMAIL = 'bugs@edx.org'
-ADMINS = ()
+DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
+DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
+SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
+TECH_SUPPORT_EMAIL = 'lms@lms.cvn.columbia.edu'
+CONTACT_EMAIL = 'lms@lms.cvn.columbia.edu'
+BUGS_EMAIL = 'lms@lms.cvn.columbia.edu'
+ADMINS = (("Matt", "mjg2203@columbia.edu"),)
 MANAGERS = ADMINS
 
 # Static content
@@ -438,7 +438,7 @@ ZENDESK_API_KEY = None
 #By setting up the default settings with an incorrect user name and password,
 # will get an error when attempting to connect
 OPEN_ENDED_GRADING_INTERFACE = {
-    'url': 'http://sandbox-grader-001.m.edx.org/peer_grading',
+    'url': 'http://example.com/peer_grading',
     'username': 'incorrect_user',
     'password': 'incorrect_pass',
     'staff_grading': 'staff_grading',
