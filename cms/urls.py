@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
+from django.views.generic.simple import redirect_to
 
 # Import this file so it can do its work, even though we don't use the name.
 # pylint: disable=W0611
@@ -30,9 +31,13 @@ urlpatterns = ('',  # nopep8
         'cvn.views.course_dashboard', name='course_dashboard'),
     #url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/dashboard/(?P<name>[^/]+)$',
     #    'contentstore.views.asset_index', name='asset_index'),
-    
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$',
-        'contentstore.views.course_index', name='course_index'),
+        'cvn.views.course_dashboard', name='course_index'),
+    url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/outline/(?P<name>[^/]+)$',
+        'contentstore.views.course_index', name='course_lectures'),
+    
+    #url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$',
+    #    'contentstore.views.course_index', name='course_index'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/import/(?P<name>[^/]+)$',
         'contentstore.views.import_course', name='import_course'),
 

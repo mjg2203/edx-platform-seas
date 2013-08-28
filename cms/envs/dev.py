@@ -188,3 +188,9 @@ try:
     from .private import *      # pylint: disable=F0401
 except ImportError:
     pass
+    
+######################CVN############
+import json
+with open(ENV_ROOT / "env.json") as env_file:
+    ENV_TOKENS = json.load(env_file)
+LMS_URL = ENV_TOKENS.get("LMS_URL")

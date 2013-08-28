@@ -48,4 +48,5 @@ def howitworks(request):
     if request.user.is_authenticated():
         return index(request)
     else:
-        return render_to_response('howitworks.html', {})
+        #return render_to_response('howitworks.html', {})
+        return redirect(settings.LMS_URL)

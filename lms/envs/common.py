@@ -815,3 +815,6 @@ def enable_theme(theme_name):
     STATICFILES_DIRS.append((u'themes/%s' % theme_name,
                              theme_root / 'static'))
 
+
+###################### WIND ############
+INSTALLED_APPS += ('wind',)

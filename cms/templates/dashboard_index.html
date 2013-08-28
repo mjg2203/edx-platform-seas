@@ -68,16 +68,16 @@
     </header>
     <div class="main-wrapper">
       <h2>Quick Links:</h2>
-      <a href="${reverse('course_index', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-edit"></i> ${_("Edit Lectures")}</a>
+      <a target="_blank" href="${reverse('piazza_discussion', kwargs=dict(course_id=course_reference.org+'/'+course_reference.course+'/'+course_reference.name))}" class="button view-button view-live-button"><i class="icon-comments"></i> ${_("Join the Discussion on Piazza")}</a>
       <br />
       <a href="${reverse('course_info', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-bullhorn"></i> ${_("Make an Announcement")}</a>
-       <br />
-      <a href="${reverse('edit_tabs', kwargs=dict(org=course_reference.org, course=course_reference.course, coursename=course_reference.name))}" class="button view-button view-live-button"><i class="icon-file"></i> ${_("Edit Static Pages")}</a>
       <br />
       <a href="${reverse('asset_index', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-folder-open"></i> ${_("View and Upload Files")}</a>
       <br />
-      <a target="_blank" href="${reverse('piazza_discussion', kwargs=dict(course_id=course_reference.org+'/'+course_reference.course+'/'+course_reference.name))}" class="button view-button view-live-button"><i class="icon-comments"></i> ${_("Join the Discussion on Piazza")}</a>
-      </br></br>
+      <a href="${reverse('edit_tabs', kwargs=dict(org=course_reference.org, course=course_reference.course, coursename=course_reference.name))}" class="button view-button view-live-button"><i class="icon-file"></i> ${_("Edit Static Pages")}</a>
+      </br>
+      <a href="${reverse('course_index', kwargs=dict(org=course_reference.org, course=course_reference.course, name=course_reference.name))}" class="button view-button view-live-button"><i class="icon-edit"></i> ${_("Edit Lectures")}</a>
+      <br /></br>
       <h2>Class Roster:</h2>
       <table class="stat_table" style="background-color:#fff" border="1">
       <tbody>
