@@ -300,6 +300,8 @@ def get_course_tabs(user, course, active_page):
         gen = VALID_TAB_TYPES[tab['type']].generator
         tabs.extend(gen(tab, user, course, active_page))
 
+    tabs.append(CourseTab('Proctor Information', reverse('proctor', args=[course.id]), active_page == 'proctor'))
+    
     # Instructor tab is special--automatically added if user is staff for the course
     if has_access(user, course, 'staff'):
         tabs.append(CourseTab('Instructor',

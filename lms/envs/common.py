@@ -817,4 +817,4 @@ def enable_theme(theme_name):
 
 
 ###################### WIND ############
-INSTALLED_APPS += ('wind',)
+INSTALLED_APPS += ('wind','cvn')

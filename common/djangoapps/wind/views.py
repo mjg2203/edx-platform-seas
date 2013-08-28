@@ -171,9 +171,9 @@ def fakewind(request):
 def register(request):
     return redirect("http://cvn.columbia.edu/");
 
-LTI_LAUNCH_URL = 'https://piazza.com/connect'
-LTI_CONSUMER_KEY = 'piazza.sandbox'
-LTI_CONSUMER_SECRET = 'test_only_secret'
+LTI_LAUNCH_URL = settings.LTI_LAUNCH_URL
+LTI_CONSUMER_KEY = settings.LTI_CONSUMER_KEY
+LTI_CONSUMER_SECRET = settings.LTI_CONSUMER_SECRET
 
 @login_required
 @ensure_csrf_cookie

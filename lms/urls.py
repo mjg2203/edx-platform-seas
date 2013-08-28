@@ -9,6 +9,7 @@ from . import one_time_startup      # pylint: disable=W0611
 
 import django.contrib.auth.views
 
+
 # Uncomment the next two lines to enable the admin:
 if settings.DEBUG or settings.MITX_FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
     admin.autodiscover()
@@ -30,6 +31,8 @@ urlpatterns = ('',  # nopep8
 
     #url(r'^register$', 'student.views.register_user', name="register_user"),
     url(r'^register$', 'wind.views.register', name="register_user"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$',
+            'cvn.views.proctor', name="proctor"),
     
     url(r'^password_reset/$', 'student.views.dashboard', name='password_reset'),
     url(r'^change_email$', 'student.views.dashboard', name="change_email"),
