@@ -156,7 +156,7 @@ def login(request):
         '''
         No post or get requests, so redirect user to Columbia WIND login
         '''
-        return redirect(settings.WIND_LOGIN_URL + "/?destination=" + settings.WIND_DESTINATION)
+        return redirect(settings.WIND_LOGIN_URL + "?destination=" + settings.WIND_DESTINATION)
         '''template = loader.get_template('wind/index.html')
         context = RequestContext(request, {})
         return HttpResponse(template.render(context))'''
