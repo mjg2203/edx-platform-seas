@@ -20,8 +20,8 @@ class CourseCreatorView(TestCase):
 
     def setUp(self):
         """ Test case setup """
-        self.user = User.objects.create_user('test_user', 'test_user+courses@edx.org', 'foo')
-        self.admin = User.objects.create_user('Mark', 'admin+courses@edx.org', 'foo')
+        self.user = User.objects.create_user('test_user', 'test_user+courses@example.com', 'foo')
+        self.admin = User.objects.create_user('Mark', 'admin+courses@example.com', 'foo')
         self.admin.is_staff = True
 
     def test_staff_permission_required(self):

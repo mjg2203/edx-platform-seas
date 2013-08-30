@@ -22,7 +22,7 @@ class Command(BaseCommand):
         The logic of the command.
         """
         username = 'populate_creators_command'
-        email = 'grant+creator+access@edx.org'
+        email = 'grant+creator+access@example.com'
         try:
             admin = User.objects.create_user(username, email, 'foo')
             admin.is_staff = True

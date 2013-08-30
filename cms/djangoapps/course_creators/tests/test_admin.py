@@ -26,11 +26,11 @@ class CourseCreatorAdminTest(TestCase):
 
     def setUp(self):
         """ Test case setup """
-        self.user = User.objects.create_user('test_user', 'test_user+courses@edx.org', 'foo')
+        self.user = User.objects.create_user('test_user', 'test_user+courses@example.com', 'foo')
         self.table_entry = CourseCreator(user=self.user)
         self.table_entry.save()
 
-        self.admin = User.objects.create_user('Mark', 'admin+courses@edx.org', 'foo')
+        self.admin = User.objects.create_user('Mark', 'admin+courses@example.com', 'foo')
         self.admin.is_staff = True
 
         self.request = HttpRequest()
@@ -103,7 +103,7 @@ class CourseCreatorAdminTest(TestCase):
             # message sent. Admin message will follow.
             base_num_emails = 1 if expect_sent_to_user else 0
             if expect_sent_to_admin:
-                context = {'user_name': "test_user", 'user_email': 'test_user+courses@edx.org'}
+                context = {'user_name': "test_user", 'user_email': 'test_user+courses@example.com'}
                 self.assertEquals(base_num_emails + 1, len(mail.outbox), 'Expected admin message to be sent')
                 sent_mail = mail.outbox[base_num_emails]
                 self.assertEquals(

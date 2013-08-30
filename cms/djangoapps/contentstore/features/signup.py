@@ -8,7 +8,7 @@ from lettuce import world, step
 def i_fill_in_the_registration_form(step):
     def fill_in_reg_form():
         register_form = world.css_find('form#register_form')
-        register_form.find_by_name('email').fill('robot+studio@edx.org')
+        register_form.find_by_name('email').fill('robot+studio@example.com')
         register_form.find_by_name('password').fill('test')
         register_form.find_by_name('username').fill('robot-studio')
         register_form.find_by_name('name').fill('Robot Studio')
@@ -32,7 +32,7 @@ def i_should_see_an_email_verification_prompt(step):
 def i_fill_in_the_signin_form(step):
     def fill_login_form():
         login_form = world.browser.find_by_css('form#login_form')
-        login_form.find_by_name('email').fill('robot+studio@edx.org')
+        login_form.find_by_name('email').fill('robot+studio@example.com')
         login_form.find_by_name('password').fill('test')
         login_form.find_by_name('submit').click()
     world.retry_on_exception(fill_login_form)

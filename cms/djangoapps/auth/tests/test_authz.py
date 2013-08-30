@@ -20,8 +20,8 @@ class CreatorGroupTest(TestCase):
 
     def setUp(self):
         """ Test case setup """
-        self.user = User.objects.create_user('testuser', 'test+courses@edx.org', 'foo')
-        self.admin = User.objects.create_user('Mark', 'admin+courses@edx.org', 'foo')
+        self.user = User.objects.create_user('testuser', 'test+courses@example.com', 'foo')
+        self.admin = User.objects.create_user('Mark', 'admin+courses@example.com', 'foo')
         self.admin.is_staff = True
 
     def test_creator_group_not_enabled(self):
@@ -47,7 +47,7 @@ class CreatorGroupTest(TestCase):
             self.assertTrue(is_user_in_creator_group(self.user))
 
             # check that a user who has not been added to the group still returns false
-            user_not_added = User.objects.create_user('testuser2', 'test+courses2@edx.org', 'foo2')
+            user_not_added = User.objects.create_user('testuser2', 'test+courses2@example.com', 'foo2')
             self.assertFalse(is_user_in_creator_group(user_not_added))
 
             # remove first user from the group and verify that is_user_in_creator_group now returns false
@@ -127,8 +127,8 @@ class CourseGroupTest(TestCase):
 
     def setUp(self):
         """ Test case setup """
-        self.creator = User.objects.create_user('testcreator', 'testcreator+courses@edx.org', 'foo')
-        self.staff = User.objects.create_user('teststaff', 'teststaff+courses@edx.org', 'foo')
+        self.creator = User.objects.create_user('testcreator', 'testcreator+courses@example.com', 'foo')
+        self.staff = User.objects.create_user('teststaff', 'teststaff+courses@example.com', 'foo')
         self.location = 'i4x', 'mitX', '101', 'course', 'test'
 
     def test_add_user_to_course_group(self):
@@ -182,7 +182,7 @@ class CourseGroupTest(TestCase):
         add_user_to_course_group(self.creator, self.staff, self.location, STAFF_ROLE_NAME)
 
         location2 = 'i4x', 'mitX', '103', 'course2', 'test2'
-        staff2 = User.objects.create_user('teststaff2', 'teststaff2+courses@edx.org', 'foo')
+        staff2 = User.objects.create_user('teststaff2', 'teststaff2+courses@example.com', 'foo')
         create_all_course_groups(self.creator, location2)
         add_user_to_course_group(self.creator, staff2, location2, STAFF_ROLE_NAME)
 
@@ -194,8 +194,8 @@ class CourseGroupTest(TestCase):
         add_user_to_course_group(self.creator, self.staff, self.location, STAFF_ROLE_NAME)
 
         location2 = 'i4x', 'mitX', '103', 'course2', 'test2'
-        creator2 = User.objects.create_user('testcreator2', 'testcreator2+courses@edx.org', 'foo')
-        staff2 = User.objects.create_user('teststaff2', 'teststaff2+courses@edx.org', 'foo')
+        creator2 = User.objects.create_user('testcreator2', 'testcreator2+courses@example.com', 'foo')
+        staff2 = User.objects.create_user('teststaff2', 'teststaff2+courses@example.com', 'foo')
         create_all_course_groups(creator2, location2)
         add_user_to_course_group(creator2, staff2, location2, STAFF_ROLE_NAME)
 
