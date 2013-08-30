@@ -84,7 +84,7 @@ def i_am_brought_to_help_page_in_new_window(step):
     windows = world.browser.windows
     assert_equal(2, len(windows))
     world.browser.switch_to_window(windows[1])
-    assert_equal('http://help.edge.edx.org/', world.browser.url)
+    assert_equal('http://help.edge.example.com/', world.browser.url)
 
 
 ############### HELPER METHODS ####################

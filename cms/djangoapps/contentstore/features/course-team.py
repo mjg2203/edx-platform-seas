@@ -8,7 +8,7 @@ from auth.authz import get_course_groupname_for_role, get_user_by_email
 from nose.tools import assert_true
 
 PASSWORD = 'test'
-EMAIL_EXTENSION = '@edx.org'
+EMAIL_EXTENSION = '@example.com'
 
 
 @step(u'(I am viewing|s?he views) the course team settings')
@@ -64,7 +64,7 @@ def delete_other_user(_step, name):
 @step(u's?he deletes me from the course team')
 def other_delete_self(_step):
     to_delete_css = '.user-item .item-actions a.remove-user[data-id="{email}"]'.format(
-        email="robot+studio@edx.org")
+        email="robot+studio@example.com")
     world.css_click(to_delete_css)
     # confirm prompt
     world.wait(.5)

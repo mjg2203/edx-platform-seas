@@ -21,7 +21,7 @@ class InternationalizationTest(ModuleStoreTestCase):
         afterwards.
         """
         self.uname = 'testuser'
-        self.email = 'test+courses@edx.org'
+        self.email = 'test+courses@example.com'
         self.password = 'foo'
 
         # Create the use so we can log them in.
