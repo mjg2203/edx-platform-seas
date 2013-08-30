@@ -36,6 +36,7 @@ urlpatterns = ('',  # nopep8
     
     url(r'^password_reset/$', 'student.views.dashboard', name='password_reset'),
     url(r'^change_email$', 'student.views.dashboard', name="change_email"),
+    url(r'^change_proctorinfo$', 'wind.views.change_proctorinfo_request', name="change_proctorinfo"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 

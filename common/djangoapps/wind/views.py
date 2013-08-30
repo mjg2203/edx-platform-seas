@@ -31,6 +31,8 @@ from django.db import connection, connections, transaction
 
 import time
 
+from django.contrib.auth import authenticate
+import django.contrib.auth
 
 def login(request):
     reqData = request.POST
@@ -44,59 +46,24 @@ def login(request):
         return HttpResponse('Validation Successful!<br />Contents of ticket validation response:<br />'+content if 'yes' in content else 'Validation Failed!<br />Contents of ticket validation response:<br />'+content);
         #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
         '''
-        post_data = {'ticketid':request.GET.get('ticketid', '')}
-        result = requests.get(settings.WIND_VALIDATION, params=post_data)
-        content_array = result.text.split()
-        #return HttpResponse(content_array[0]=='yes')
-        
-        #return redirect(reverse('dashboard'))
-        if (content_array[0] == 'yes'):
-            try:
-                user = User.objects.prefetch_related("groups").get(email=content_array[1]+'@columbia.edu')
-            except User.DoesNotExist:
-                post_override = dict()
-                post_override['email'] = content_array[1]+'@columbia.edu'
-                post_override['name'] = content_array[1]
-                post_override['username'] = content_array[1]
-                post_override['password'] = 'secret'
-                post_override['terms_of_service'] = 'true'
-                post_override['honor_code'] = 'true'
-                #create_account(request, post_override)
-                ret = _do_create_account(post_override)
-                if isinstance(ret, HttpResponse):  # if there was an error then return that
-                    return ret
-                (user, profile, registration) = ret
-                activate_account(request, registration.activation_key)
-            
-            request.POST = request.POST.copy()
-            
-            #newrequest = request.copy()
-            #request.POST = dict()
-            
-            request.POST['email'] = content_array[1]+'@columbia.edu'
-            
-            request.POST['password'] = 'secret'
-
-            #return HttpResponse(content_array[1]+'@columbia.edu')
-            login_user(request)
-
-            #if user is a professor, redirect them to cms
-            user_groups = [g.name for g in user.groups.all()]
-            pattern = re.compile("instructor|staff")
-            returnable = ''
-            for user_group in user_groups:
-                if pattern.match(user_group):
-                    return redirect(settings.CMS_URL)
-
-            return redirect(reverse('dashboard'))
-            #return HttpResponse("User does not exist!"); 
-
-            
-
-            #return HttpResponse('Validation Successful!<br />Contents of ticket validation response:<br />'+' '.join(content_array))
+        user = authenticate(request=request, token=request.GET.get('ticketid', ''))
+        if user is not None:
+            if user.is_active:
+                print "You provided a correct username and password!"
+                django.contrib.auth.login(request, user)
+            else:
+                return HttpResponse('Your account has been disabled!')
         else:
-            return HttpResponse('Validation Failed!<br />Contents of ticket validation response:<br />'+content_array[0])
-            #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
+            return HttpResponse('Your username and password were incorrect.')
+        #if user is a professor, redirect them to cms
+        user_groups = [g.name for g in user.groups.all()]
+        pattern = re.compile("instructor|staff")
+        returnable = ''
+        for user_group in user_groups:
+            if pattern.match(user_group):
+                return redirect(settings.CMS_URL)
+        return redirect(reverse('dashboard'))
+
     elif 'email' in reqData and 'first' in reqData and 'last' in reqData and 'token' in reqData:
         '''
         User is logging in via the old PHP CVN web app
@@ -264,3 +231,61 @@ def course_dashboard(request, org, course, name):
     '''
 
     return render_to_response('dashboard_index.html', {'courseEnrollments':courseEnrollments})
+
+
+import json
+
+@ensure_csrf_cookie
+def change_proctorinfo_request(request):
+    ''' AJAX call from the profile page. User wants a new e-mail.
+    '''
+    ## Make sure it checks for existing e-mail conflicts
+    if not request.user.is_authenticated:
+        raise Http404
+
+    user = request.user
+
+    '''
+    if not user.check_password(request.POST['password']):
+        return HttpResponse(json.dumps({'success': False,
+                                        'error': _('Invalid password')}))
+
+    new_email = request.POST['new_email']
+    try:
+        validate_email(new_email)
+    except ValidationError:
+        return HttpResponse(json.dumps({'success': False,
+                                        'error': _('Valid e-mail address required.')}))
+
+    if User.objects.filter(email=new_email).count() != 0:
+        ## CRITICAL TODO: Handle case sensitivity for e-mails
+        return HttpResponse(json.dumps({'success': False,
+                                        'error': _('An account with this e-mail already exists.')}))
+
+    pec_list = PendingEmailChange.objects.filter(user=request.user)
+    if len(pec_list) == 0:
+        pec = PendingEmailChange()
+        pec.user = user
+    else:
+        pec = pec_list[0]
+
+    pec.new_email = request.POST['new_email']
+    pec.activation_key = uuid.uuid4().hex
+    pec.save()
+
+    if pec.new_email == user.email:
+        pec.delete()
+        return HttpResponse(json.dumps({'success': False,
+                                        'error': _('Old email is the same as the new email.')}))
+
+    d = {'key': pec.activation_key,
+         'old_email': user.email,
+         'new_email': pec.new_email}
+
+    subject = render_to_string('emails/email_change_subject.txt', d)
+    subject = ''.join(subject.splitlines())
+    message = render_to_string('emails/email_change.txt', d)
+
+    _res = send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [pec.new_email])
+    '''
+    return HttpResponse(json.dumps({'success': True}))
