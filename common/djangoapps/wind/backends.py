@@ -5,6 +5,8 @@ from student.views import _do_create_account
 from django.conf import settings
 from student.views import activate_account
 import requests
+import random
+import string
 
 class WindBackend(object):
     """
