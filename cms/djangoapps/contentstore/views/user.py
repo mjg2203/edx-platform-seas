@@ -72,7 +72,7 @@ def index(request):
     elif todays_date < datetime.date(todays_date.year, 6, 11):
         course_run_values=[str(todays_date.year)+'_2', str(todays_date.year)+'_3']
         course_run_texts=['Summer '+str(todays_date.year), 'Fall '+str(todays_date.year)]
-    elif todays_date < datetime.date(todays_date.year, 9, 2):
+    elif todays_date < datetime.date(todays_date.year, 10, 2):
         course_run_values=[str(todays_date.year)+'_3', str(todays_date.year+1)+'_1']
         course_run_texts=['Fall '+str(todays_date.year), 'Spring '+str(todays_date.year+1)]
     else:
