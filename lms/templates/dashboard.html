@@ -165,6 +165,7 @@
             % endif
           </span> <span class="data">${ user.email | h }</span>
         </li>
+      <%doc>
         <li>
           <span class="title"><div class="icon name-icon"></div>${_("Proctor")}
             % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
@@ -172,6 +173,7 @@
             % endif
           </span> <span class="data">${ user.email | h }</span>
         </li>
+        </%doc>
 
         % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
         <!--li>
