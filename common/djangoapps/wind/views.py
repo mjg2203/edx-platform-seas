@@ -35,6 +35,12 @@ from django.contrib.auth import authenticate
 import django.contrib.auth
 
 def login(request):
+    '''
+    If user is already logged in, redirects him to the dashboard
+    If user isn't logged in, redirects them to WIND login
+    If user is coming back from WIND, authenticates with ticket id
+    If user is coming from the old CVN, authenticates with CVN-generated ticket
+    '''
     reqData = request.POST
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
@@ -74,56 +80,24 @@ def login(request):
         User is logging in via the old PHP CVN web app
         available GET variables: email, first, last, token
         '''
-        cursor = connections['cvn_php'].cursor()
-
-        # Data retrieval operation - no commit required
-        cursor.execute("SELECT unix_timestamp(created), email, token FROM django_auth_hack WHERE email=%s AND token=%s", [reqData['email'], reqData['token']])
-        row = cursor.fetchone()
-        if row is not None and row[0] > int(time.time())-86400:
-            #if token has been found in database and was created less than 1 day ago
-            #return HttpResponse(str(row[0])+' '+str(row[1])+' '+str(row[2])+' Current Timestamp:'+str(int(time.time())))
-            
-            try:
-                user = User.objects.prefetch_related("groups").get(email=str(row[1]))
-            except User.DoesNotExist:
-                post_override = dict()
-                post_override['email'] = str(row[1])
-                post_override['name'] = reqData['first']+' '+reqData['last']
-                post_override['username'] = str(row[1])
-                post_override['password'] = 'secret'
-                post_override['terms_of_service'] = 'true'
-                post_override['honor_code'] = 'true'
-                #create_account(request, post_override)
-                ret = _do_create_account(post_override)
-                if isinstance(ret, HttpResponse):  # if there was an error then return that
-                    return ret
-                (user, profile, registration) = ret
-                activate_account(request, registration.activation_key)
-            
-            request.POST = request.POST.copy()
-            
-            #newrequest = request.copy()
-            #request.POST = dict()
-            
-            request.POST['email'] = str(row[1])
-            
-            request.POST['password'] = 'secret'
-
-            #return HttpResponse(content_array[1]+'@columbia.edu')
-            login_user(request)
-
-            #if user is a professor, redirect them to cms
-            user_groups = [g.name for g in user.groups.all()]
-            pattern = re.compile("instructor|staff")
-            returnable = ''
-            for user_group in user_groups:
-                if pattern.match(user_group):
-                    return redirect(settings.CMS_URL)
-
-            return redirect(reverse('dashboard'))
+        user = authenticate(email=reqData['email'], first=reqData['first'],
+                             last=reqData['last'], token=reqData['token'], username=None)
+        if user is not None:
+            if user.is_active:
+                print "You provided a correct username and password!"
+                django.contrib.auth.login(request, user)
+            else:
+                return HttpResponse('Your account has been disabled!')
         else:
-            return HttpResponse("External Authentication Failed!")
-        #return HttpResponse('wa!')
+            return HttpResponse('CVN authentication failed.')
+        #if user is a professor, redirect them to cms
+        user_groups = [g.name for g in user.groups.all()]
+        pattern = re.compile("instructor|staff")
+        returnable = ''
+        for user_group in user_groups:
+            if pattern.match(user_group):
+                return redirect(settings.CMS_URL)
+        return redirect(reverse('dashboard'))
     else:
         '''
         No post or get requests, so redirect user to Columbia WIND login
@@ -148,6 +122,10 @@ LTI_CONSUMER_SECRET = settings.LTI_CONSUMER_SECRET
 @login_required
 @ensure_csrf_cookie
 def piazza_test(request, course_id):
+    '''
+    This view outputs a self-sending html form that sends a POST message to Piazza.
+      From the user's perspective, this view redirects them and signs them into Piazza
+    '''
     # Create a new tool configuration
     config = ToolConfig(title = 'Piazza',
             launch_url = LTI_LAUNCH_URL)

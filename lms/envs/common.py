@@ -817,4 +817,4 @@ def enable_theme(theme_name):
                              theme_root / 'static'))
     
 ############################### WIND ################################
-AUTHENTICATION_BACKENDS = ('wind.backends.WindBackend', ) + AUTHENTICATION_BACKENDS
+AUTHENTICATION_BACKENDS = ('wind.backends.OldCVNBackend', 'wind.backends.WindBackend', ) + AUTHENTICATION_BACKENDS
