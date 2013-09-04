@@ -80,7 +80,7 @@ def login(request):
         User is logging in via the old PHP CVN web app
         available GET variables: email, first, last, token
         '''
-        user = authenticate(email=reqData['email'], first=reqData['first'],
+        user = authenticate(user_email=reqData['email'], first=reqData['first'],
                              last=reqData['last'], token=reqData['token'], username=None)
         if user is not None:
             if user.is_active:
