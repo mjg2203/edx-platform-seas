@@ -57,8 +57,8 @@ class OldCVNBackend(object):
 
     supports_inactive_user = False
 
-    def authenticate(self, user_email=None, first=None, last=None, token=None):
-        if email is None or first is None or last is None or token is None:
+    def authenticate(self, user_email=None, first=None, last=None, token=None, username=None):
+        if user_email is None or first is None or last is None or token is None:
             return None
         cursor = connections['cvn_php'].cursor()
         # Data retrieval operation - no commit required
