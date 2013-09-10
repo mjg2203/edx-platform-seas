@@ -35,8 +35,8 @@ class WindBackend(object):
                 post_override['honor_code'] = 'true'
                 #create_account(request, post_override)
                 ret = _do_create_account(post_override)
-                if isinstance(ret, HttpResponse):  # if there was an error then return that
-                    return ret
+                if isinstance(ret, HttpResponse):
+                    raise Exception("Account creation failed")
                 (user, profile, registration) = ret
                 user.is_active = True;
                 user.save()
