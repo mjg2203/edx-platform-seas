@@ -30,6 +30,9 @@ from path import path
 
 from .discussionsettings import *
 
+from lms.xblock.mixin import LmsBlockMixin
+from xmodule.modulestore.inheritance import InheritanceMixin
+
 ################################### FEATURES ###################################
 # The display name of the platform to be used in templates/emails/etc.
 PLATFORM_NAME = "edX"
@@ -86,14 +89,13 @@ MITX_FEATURES = {
 
     'DISABLE_LOGIN_BUTTON': False,  # used in systems where login is automatic, eg MIT SSL
 
-    'STUB_VIDEO_FOR_TESTING': False,  # do not display video when running automated acceptance tests
-
     # extrernal access methods
     'ACCESS_REQUIRE_STAFF_FOR_COURSE': False,
     'AUTH_USE_OPENID': False,
     'AUTH_USE_MIT_CERTIFICATES': False,
     'AUTH_USE_OPENID_PROVIDER': False,
     'AUTH_USE_SHIB': False,
+    'AUTH_USE_CAS': False,
 
     # This flag disables the requirement of having to agree to the TOS for users registering
     # with Shib.  Feature was requested by Stanford's office of general counsel
@@ -104,6 +106,8 @@ MITX_FEATURES = {
 
     # analytics experiments
     'ENABLE_INSTRUCTOR_ANALYTICS': False,
+
+    'ENABLE_INSTRUCTOR_EMAIL': False,
 
     # enable analytics server.
     # WARNING: THIS SHOULD ALWAYS BE SET TO FALSE UNDER NORMAL
@@ -145,7 +149,7 @@ MITX_FEATURES = {
     'ENABLE_INSTRUCTOR_BACKGROUND_TASKS': True,
 
     # Enable instructor dash beta version link
-    'ENABLE_INSTRUCTOR_BETA_DASHBOARD': False,
+    'ENABLE_INSTRUCTOR_BETA_DASHBOARD': True,
 
     # Allow use of the hint managment instructor view.
     'ENABLE_HINTER_INSTRUCTOR_VIEW': False,
@@ -156,6 +160,15 @@ MITX_FEATURES = {
     # Toggle to enable chat availability (configured on a per-course
     # basis in Studio)
     'ENABLE_CHAT': False,
+
+    # Allow users to enroll with methods other than just honor code certificates
+    'MULTIPLE_ENROLLMENT_ROLES' : False,
+
+    # Toggle the availability of the shopping cart page
+    'ENABLE_SHOPPING_CART': False,
+
+    # Toggle storing detailed billing information
+    'STORE_BILLING_INFO': False,
 }
 
 # Used for A/B testing
@@ -284,12 +297,14 @@ WIKI_ENABLED = False
 ###
 
 COURSE_DEFAULT = '6.002x_Fall_2012'
-COURSE_SETTINGS = {'6.002x_Fall_2012': {'number': '6.002x',
-                                          'title': 'Circuits and Electronics',
-                                          'xmlpath': '6002x/',
-                                          'location': 'i4x://edx/6002xs12/course/6.002x_Fall_2012',
-                                          }
-                    }
+COURSE_SETTINGS = {
+    '6.002x_Fall_2012': {
+        'number': '6.002x',
+        'title': 'Circuits and Electronics',
+        'xmlpath': '6002x/',
+        'location': 'i4x://edx/6002xs12/course/6.002x_Fall_2012',
+    }
+}
 
 # IP addresses that are allowed to reload the course, etc.
 # TODO (vshnayder): Will probably need to change as we get real access control in.
@@ -311,6 +326,12 @@ MODULESTORE = {
     }
 }
 CONTENTSTORE = None
+
+############# XBlock Configuration ##########
+
+# This should be moved into an XBlock Runtime/Application object
+# once the responsibility of XBlock creation is moved out of modulestore - cpennington
+XBLOCK_MIXINS = (LmsBlockMixin, InheritanceMixin)
 
 #################### Python sandbox ############################################
 
@@ -347,6 +368,9 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 USE_TZ = True
 
+# CMS base
+CMS_BASE = 'localhost:8001'
+
 # Site info
 SITE_ID = 1
 SITE_NAME = "lms.cvn.columbia.edu"
@@ -356,6 +380,8 @@ IGNORABLE_404_ENDS = ('favicon.ico')
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAILS_PER_TASK = 100
+EMAILS_PER_QUERY = 1000
 DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
 DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
 SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
@@ -380,7 +406,7 @@ FAVICON_PATH = 'images/favicon.ico'
 # Locale/Internationalization
 TIME_ZONE = 'America/New_York'  # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 LANGUAGE_CODE = 'en'  # http://www.i18nguy.com/unicode/language-identifiers.html
-USE_I18N = True
+USE_I18N = False
 USE_L10N = True
 
 # Localization strings (e.g. django.po) are under this directory
@@ -432,6 +458,19 @@ FEEDBACK_SUBMISSION_EMAIL = None
 ZENDESK_URL = None
 ZENDESK_USER = None
 ZENDESK_API_KEY = None
+
+##### shoppingcart Payment #####
+PAYMENT_SUPPORT_EMAIL = 'payment@edx.org'
+##### Using cybersource by default #####
+CC_PROCESSOR = {
+    'CyberSource': {
+        'SHARED_SECRET': '',
+        'MERCHANT_ID': '',
+        'SERIAL_NUMBER': '',
+        'ORDERPAGE_VERSION': '7',
+        'PURCHASE_ENDPOINT': '',
+    }
+}
 
 ################################# open ended grading config  #####################
 
@@ -522,17 +561,17 @@ courseware_js = (
 # 'js/vendor/RequireJS.js' - Require JS wrapper.
 # See https://edx-wiki.atlassian.net/wiki/display/LMS/Integration+of+Require+JS+into+the+system
 main_vendor_js = [
-  'js/vendor/RequireJS.js',
-  'js/vendor/json2.js',
-  'js/vendor/jquery.min.js',
-  'js/vendor/jquery-ui.min.js',
-  'js/vendor/jquery.cookie.js',
-  'js/vendor/jquery.qtip.min.js',
-  'js/vendor/swfobject/swfobject.js',
-  'js/vendor/jquery.ba-bbq.min.js',
-  'js/vendor/annotator.min.js',
-  'js/vendor/annotator.store.min.js',
-  'js/vendor/annotator.tags.min.js'
+    'js/vendor/RequireJS.js',
+    'js/vendor/json2.js',
+    'js/vendor/jquery.min.js',
+    'js/vendor/jquery-ui.min.js',
+    'js/vendor/jquery.cookie.js',
+    'js/vendor/jquery.qtip.min.js',
+    'js/vendor/swfobject/swfobject.js',
+    'js/vendor/jquery.ba-bbq.min.js',
+    'js/vendor/annotator.min.js',
+    'js/vendor/annotator.store.min.js',
+    'js/vendor/annotator.tags.min.js'
 ]
 
 discussion_js = sorted(rooted_glob(PROJECT_ROOT / 'static', 'coffee/src/discussion/**/*.js'))
@@ -580,7 +619,7 @@ PIPELINE_JS = {
             'js/toggle_login_modal.js',
             'js/sticky_filter.js',
             'js/query-params.js',
-            'js/utility.js',
+            'js/src/utility.js',
         ],
         'output_filename': 'js/lms-application.js',
 
@@ -595,6 +634,11 @@ PIPELINE_JS = {
         'source_filenames': main_vendor_js,
         'output_filename': 'js/lms-main_vendor.js',
         'test_order': 0,
+    },
+    'module-descriptor-js': {
+        'source_filenames': rooted_glob(COMMON_ROOT / 'static/', 'xmodule/descriptors/js/*.js'),
+        'output_filename': 'js/lms-module-descriptors.js',
+        'test_order': 8,
     },
     'module-js': {
         'source_filenames': rooted_glob(COMMON_ROOT / 'static', 'xmodule/modules/js/*.js'),
@@ -740,6 +784,7 @@ INSTALLED_APPS = (
     'psychometrics',
     'licenses',
     'course_groups',
+    'bulk_email',
 
     # External auth (OpenID, shib)
     'external_auth',
@@ -760,6 +805,7 @@ INSTALLED_APPS = (
 
     # For testing
     'django.contrib.admin',  # only used in DEBUG mode
+    'django_nose',
     'debug',
 
     # Discussion forums
@@ -771,8 +817,17 @@ INSTALLED_APPS = (
     'rest_framework',
     'user_api',
 
+    # shopping cart
+    'shoppingcart',
+
     # Notification preferences setting
     'notification_prefs',
+
+    # Different Course Modes
+    'course_modes',
+
+    # Student Identity Verification
+    'verify_student',
 )
 
 ######################### MARKETING SITE ###############################
@@ -787,7 +842,11 @@ MKTG_URL_LINK_MAP = {
     'TOS': 'tos',
     'HONOR': 'honor',
     'PRIVACY': 'privacy_edx',
+
+    # Verified Certificates
+    'WHAT_IS_VERIFIED_CERT' : 'verified-certificate',
 }
+
 
 ############################### THEME ################################
 def enable_theme(theme_name):
@@ -818,3 +877,19 @@ def enable_theme(theme_name):
     
 ############################### WIND ################################
 AUTHENTICATION_BACKENDS = ('wind.backends.OldCVNBackend', 'wind.backends.WindBackend', ) + AUTHENTICATION_BACKENDS
+
+################# Student Verification #################
+VERIFY_STUDENT = {
+    "DAYS_GOOD_FOR" : 365, # How many days is a verficiation good for?
+}
+
+######################## CAS authentication ###########################
+
+if MITX_FEATURES.get('AUTH_USE_CAS'):
+    CAS_SERVER_URL = 'https://provide_your_cas_url_here'
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        'django_cas.backends.CASBackend',
+    )
+    INSTALLED_APPS += ('django_cas',)
+    MIDDLEWARE_CLASSES += ('django_cas.middleware.CASMiddleware',)

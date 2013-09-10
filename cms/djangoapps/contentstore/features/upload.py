@@ -10,6 +10,7 @@ import os
 
 TEST_ROOT = settings.COMMON_TEST_DATA_ROOT
 
+
 @step(u'I go to the files and uploads page')
 def go_to_uploads(_step):
     menu_css = 'li.nav-course-courseware'
@@ -25,7 +26,24 @@ def upload_file(_step, file_name):
     #uploading the file itself
     path = os.path.join(TEST_ROOT, 'uploads/', file_name)
     world.browser.execute_script("$('input.file-input').css('display', 'block')")
-    world.browser.attach_file('file', os.path.abspath(path))
+    world.browser.attach_file('files[]', os.path.abspath(path))
+    close_css = 'a.close-button'
+    world.css_click(close_css)
+
+
+@step(u'I upload the files (".*")$')
+def upload_file(_step, files_string):
+    # Turn files_string to a list of file names
+    files = files_string.split(",")
+    files = map(lambda x: string.strip(x, ' "\''), files)
+
+    upload_css = 'a.upload-button'
+    world.css_click(upload_css)
+    #uploading the files
+    for f in files:
+        path = os.path.join(TEST_ROOT, 'uploads/', f)
+        world.browser.execute_script("$('input.file-input').css('display', 'block')")
+        world.browser.attach_file('files[]', os.path.abspath(path))
     close_css = 'a.close-button'
     world.css_click(close_css)
 
@@ -106,8 +124,8 @@ def get_index(file_name):
 def get_file(file_name):
     index = get_index(file_name)
     assert index != -1
-
     url_css = 'a.filename'
+
     def get_url():
         return world.css_find(url_css)[index]._element.get_attribute('href')
     url = world.retry_on_exception(get_url)

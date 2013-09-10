@@ -1,3 +1,11 @@
+verifyInputType = (input, expectedType) ->
+    # Some browsers (e.g. FireFox) do not support the "number"
+    # input type.  We can accept a "text" input instead
+    # and still get acceptable behavior in the UI.
+    if expectedType == 'number' and input.type != 'number'
+        expectedType = 'text'
+    expect(input.type).toBe(expectedType)
+
 describe "Test Metadata Editor", ->
     editorTemplate = readFixtures('metadata-editor.underscore')
     numberEntryTemplate = readFixtures('metadata-number-entry.underscore')
@@ -18,7 +26,6 @@ describe "Test Metadata Editor", ->
         explicitly_set: true,
         field_name: "display_name",
         help: "Specifies the name for this component.",
-        inheritable: false,
         options: [],
         type: CMS.Models.Metadata.GENERIC_TYPE,
         value: "Word cloud"
@@ -30,7 +37,6 @@ describe "Test Metadata Editor", ->
         explicitly_set: false,
         field_name: "show_answer",
         help: "When should you show the answer",
-        inheritable: true,
         options: [
             {"display_name": "Always", "value": "always"},
             {"display_name": "Answered", "value": "answered"},
@@ -46,7 +52,6 @@ describe "Test Metadata Editor", ->
         explicitly_set: false,
         field_name: "num_inputs",
         help: "Number of text boxes for student to input words/sentences.",
-        inheritable: false,
         options: {min: 1},
         type: CMS.Models.Metadata.INTEGER_TYPE,
         value: 5
@@ -58,7 +63,6 @@ describe "Test Metadata Editor", ->
         explicitly_set: true,
         field_name: "weight",
         help: "Weight for this problem",
-        inheritable: true,
         options: {min: 1.3, max:100.2, step:0.1},
         type: CMS.Models.Metadata.FLOAT_TYPE,
         value: 10.2
@@ -70,7 +74,6 @@ describe "Test Metadata Editor", ->
         explicitly_set: false,
         field_name: "list",
         help: "A list of things.",
-        inheritable: false,
         options: [],
         type: CMS.Models.Metadata.LIST_TYPE,
         value: ["the first display value", "the second"]
@@ -91,7 +94,6 @@ describe "Test Metadata Editor", ->
                         explicitly_set: true,
                         field_name: "unknown_type",
                         help: "Mystery property.",
-                        inheritable: false,
                         options: [
                             {"display_name": "Always", "value": "always"},
                             {"display_name": "Answered", "value": "answered"},
@@ -113,7 +115,7 @@ describe "Test Metadata Editor", ->
 
             verifyEntry = (index, display_name, type) ->
                 expect(childModels[index].get('display_name')).toBe(display_name)
-                expect(childViews[index].type).toBe(type)
+                verifyInputType(childViews[index], type)
 
             verifyEntry(0, 'Display Name', 'text')
             verifyEntry(1, 'Inputs', 'number')
@@ -137,7 +139,6 @@ describe "Test Metadata Editor", ->
                     explicitly_set: false,
                     field_name: "display_name",
                     help: "",
-                    inheritable: false,
                     options: [],
                     type: CMS.Models.Metadata.GENERIC_TYPE,
                     value: null
@@ -164,7 +165,7 @@ describe "Test Metadata Editor", ->
     assertInputType = (view, expectedType) ->
         input = view.$el.find('.setting-input')
         expect(input.length).toEqual(1)
-        expect(input[0].type).toEqual(expectedType)
+        verifyInputType(input[0], expectedType)
 
     assertValueInView = (view, expectedValue) ->
         expect(view.getValueFromEditor()).toEqual(expectedValue)

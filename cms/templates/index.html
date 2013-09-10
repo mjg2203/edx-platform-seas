@@ -99,6 +99,7 @@
                   <label for="new-course-name">${_("Course Name")}</label>
                   <input class="new-course-name" id="new-course-name" type="text" name="new-course-name" aria-required="true" placeholder="${_('e.g. Introduction to Computer Science')}" />
                   <span class="tip tip-stacked">${_("The public display name for your course.")}</span>
+                  <span class="tip tip-error is-hiding"></span>
                 </li>
                 <li class="field field-inline text required" id="field-organization">
                   <!--label for="new-course-org">${_("Organization")}</label-->
@@ -127,7 +128,7 @@
           </div>
 
           <div class="actions">
-            <input type="submit" value="${_('Save')}" class="action action-primary new-course-save" />
+            <input type="submit" value="${_('Create')}" class="action action-primary new-course-save" />
             <input type="button" value="${_('Cancel')}" class="action action-secondary action-cancel new-course-cancel" />
           </div>
         </form>

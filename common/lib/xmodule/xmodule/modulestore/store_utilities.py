@@ -110,12 +110,27 @@ def _clone_modules(modulestore, modules, source_location, dest_location):
         original_loc = Location(module.location)
 
         if original_loc.category != 'course':
-            module.location = module.location._replace(
-                tag=dest_location.tag, org=dest_location.org, course=dest_location.course)
+            new_location = module.location._replace(
+                tag=dest_location.tag,
+                org=dest_location.org,
+                course=dest_location.course
+            )
+            module.scope_ids = module.scope_ids._replace(
+                def_id=new_location,
+                usage_id=new_location
+            )
         else:
             # on the course module we also have to update the module name
-            module.location = module.location._replace(
-                tag=dest_location.tag, org=dest_location.org, course=dest_location.course, name=dest_location.name)
+            new_location = module.location._replace(
+                tag=dest_location.tag,
+                org=dest_location.org,
+                course=dest_location.course,
+                name=dest_location.name
+            )
+            module.scope_ids = module.scope_ids._replace(
+                def_id=new_location,
+                usage_id=new_location
+            )
 
         print "Cloning module {0} to {1}....".format(original_loc, module.location)
 
@@ -146,13 +161,9 @@ def _clone_modules(modulestore, modules, source_location, dest_location):
 
 
 def clone_course(modulestore, contentstore, source_location, dest_location, delete_original=False):
-    # first check to see if the modulestore is Mongo backed
-    if not isinstance(modulestore, MongoModuleStore):
-        raise Exception("Expected a MongoModuleStore in the runtime. Aborting....")
-
     # check to see if the dest_location exists as an empty course
     # we need an empty course because the app layers manage the permissions and users
-    if not modulestore.has_item(dest_location):
+    if not modulestore.has_item(dest_location.course_id, dest_location):
         raise Exception("An empty course at {0} must have already been created. Aborting...".format(dest_location))
 
     # verify that the dest_location really is an empty course, which means only one with an optional 'overview'
@@ -171,7 +182,7 @@ def clone_course(modulestore, contentstore, source_location, dest_location, dele
         raise Exception("Course at destination {0} is not an empty course. You can only clone into an empty course. Aborting...".format(dest_location))
 
     # check to see if the source course is actually there
-    if not modulestore.has_item(source_location):
+    if not modulestore.has_item(source_location.course_id, source_location):
         raise Exception("Cannot find a course at {0}. Aborting".format(source_location))
 
     # Get all modules under this namespace which is (tag, org, course) tuple
@@ -250,7 +261,7 @@ def delete_course(modulestore, contentstore, source_location, commit=False):
     """
 
     # check to see if the source course is actually there
-    if not modulestore.has_item(source_location):
+    if not modulestore.has_item(source_location.course_id, source_location):
         raise Exception("Cannot find a course at {0}. Aborting".format(source_location))
 
     # first delete all of the thumbnails
