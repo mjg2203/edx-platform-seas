@@ -14,18 +14,9 @@ sessions. Assumes structure:
 
 from .common import *
 from logsettings import get_logger_config
-import json
 
 DEBUG = True
 TEMPLATE_DEBUG = True
-
-with open(ENV_ROOT / "env.json") as env_file:
-    ENV_TOKENS = json.load(env_file)
-
-THEME_NAME=ENV_TOKENS.get('THEME_NAME', None)
-
-enable_theme(THEME_NAME)
-FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
 
 MITX_FEATURES['DISABLE_START_DATES'] = False
@@ -57,15 +48,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ENV_ROOT / "db" / "mitx.db",
-    },
-    #
-    #'cvn_php': {
-    #    "HOST": 'example.com',
-    #    'ENGINE': 'django.db.backends.mysql',
-    #    'NAME': 'joaquin',
-    #    'USER': 'joaquin',
-    #    'PASSWORD': 'PASSWORD_REDACTED'
-    #}'''
+    }
 }
 
 CACHES = {
@@ -99,7 +82,7 @@ CACHES = {
 
 
 XQUEUE_INTERFACE = {
-    "url": "https://example.com",
+    "url": "https://sandbox-xqueue.edx.org",
     "django_auth": {
         "username": "lms",
         "password": "***REMOVED***"
@@ -193,11 +176,12 @@ LMS_MIGRATION_ALLOWED_IPS = ['127.0.0.1']
 
 ################################ OpenID Auth #################################
 
-MITX_FEATURES['AUTH_USE_OPENID'] = False
-MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = False
+MITX_FEATURES['AUTH_USE_OPENID'] = True
+MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = True
 MITX_FEATURES['BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH'] = True
 
 INSTALLED_APPS += ('external_auth',)
+INSTALLED_APPS += ('django_openid_auth',)
 
 OPENID_CREATE_USERS = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True

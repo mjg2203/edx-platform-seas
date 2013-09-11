@@ -82,7 +82,7 @@ MITX_FEATURES = {
 
     'ENABLE_PSYCHOMETRICS': False,  # real-time psychometrics (eg item response theory analysis in instructor dashboard)
 
-    'ENABLE_DJANGO_ADMIN_SITE': True,  # set true to enable django's admin site, even on prod (e.g. for course ops)
+    'ENABLE_DJANGO_ADMIN_SITE': False,  # set true to enable django's admin site, even on prod (e.g. for course ops)
     'ENABLE_SQL_TRACKING_LOGS': False,
     'ENABLE_LMS_MIGRATION': False,
     'ENABLE_MANUAL_GIT_RELOAD': False,
@@ -147,7 +147,7 @@ MITX_FEATURES = {
     'ENABLE_SERVICE_STATUS': False,
 
     # Toggle to indicate use of a custom theme
-    'USE_CUSTOM_THEME': True,
+    'USE_CUSTOM_THEME': False,
 
     # Don't autoplay videos for students
     'AUTOPLAY_VIDEOS': False,
@@ -416,22 +416,23 @@ CMS_BASE = 'localhost:8001'
 
 # Site info
 SITE_ID = 1
-SITE_NAME = "lms.cvn.columbia.edu"
+SITE_NAME = "edx.org"
 HTTPS = 'on'
 ROOT_URLCONF = 'lms.urls'
 IGNORABLE_404_ENDS = ('favicon.ico')
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'registration@edx.org'
+DEFAULT_BULK_FROM_EMAIL = 'course-updates@edx.org'
 EMAILS_PER_TASK = 100
 EMAILS_PER_QUERY = 1000
-DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
-DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
-SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
-TECH_SUPPORT_EMAIL = 'lms@lms.cvn.columbia.edu'
-CONTACT_EMAIL = 'lms@lms.cvn.columbia.edu'
-BUGS_EMAIL = 'lms@lms.cvn.columbia.edu'
-ADMINS = (("Matt", "mjg2203@columbia.edu"),)
+DEFAULT_FEEDBACK_EMAIL = 'feedback@edx.org'
+SERVER_EMAIL = 'devops@edx.org'
+TECH_SUPPORT_EMAIL = 'technical@edx.org'
+CONTACT_EMAIL = 'info@edx.org'
+BUGS_EMAIL = 'bugs@edx.org'
+ADMINS = ()
 MANAGERS = ADMINS
 
 # Static content
@@ -521,7 +522,7 @@ PAID_COURSE_REGISTRATION_CURRENCY = ['usd', '$']
 #By setting up the default settings with an incorrect user name and password,
 # will get an error when attempting to connect
 OPEN_ENDED_GRADING_INTERFACE = {
-    'url': 'http://example.com/peer_grading',
+    'url': 'http://sandbox-grader-001.m.edx.org/peer_grading',
     'username': 'incorrect_user',
     'password': 'incorrect_pass',
     'staff_grading': 'staff_grading',
@@ -593,8 +594,6 @@ MIDDLEWARE_CLASSES = (
 
     # catches any uncaught RateLimitExceptions and returns a 403 instead of a 500
     'ratelimitbackend.middleware.RateLimitMiddleware',
-    'wind.middleware.DisableCSRF',
-
     # For A/B testing
     'waffle.middleware.WaffleMiddleware',
 )
@@ -897,7 +896,7 @@ MKTG_URLS = {}
 MKTG_URL_LINK_MAP = {
     'ABOUT': 'about_edx',
     'CONTACT': 'contact',
-#    'FAQ': 'help_edx',
+    'FAQ': 'help_edx',
     'COURSES': 'courses',
     'ROOT': 'root',
     'TOS': 'tos',
@@ -935,9 +934,6 @@ def enable_theme(theme_name):
     # avoid collisions with default edX static files
     STATICFILES_DIRS.append((u'themes/%s' % theme_name,
                              theme_root / 'static'))
-    
-############################### WIND ################################
-AUTHENTICATION_BACKENDS = ('wind.backends.OldCVNBackend', 'wind.backends.WindBackend', ) + AUTHENTICATION_BACKENDS
 
 ################# Student Verification #################
 VERIFY_STUDENT = {
