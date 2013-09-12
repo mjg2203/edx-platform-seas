@@ -60,7 +60,7 @@ MITX_FEATURES = {
 
     # If set to True, new Studio users won't be able to author courses unless
     # edX has explicitly added them to the course creator group.
-    'ENABLE_CREATOR_GROUP': True
+    'ENABLE_CREATOR_GROUP': False,
 }
 ENABLE_JASMINE = False
 
@@ -190,9 +190,9 @@ IGNORABLE_404_ENDS = ('favicon.ico')
 
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
-DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
-SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
+DEFAULT_FROM_EMAIL = 'registration@edx.org'
+DEFAULT_FEEDBACK_EMAIL = 'feedback@edx.org'
+SERVER_EMAIL = 'devops@edx.org'
 ADMINS = ()
 MANAGERS = ADMINS
 
@@ -386,7 +386,7 @@ MKTG_URLS = {}
 MKTG_URL_LINK_MAP = {
     'ABOUT': 'about_edx',
     'CONTACT': 'contact',
-    # 'FAQ': 'help_edx',
+    'FAQ': 'help_edx',
     'COURSES': 'courses',
     'ROOT': 'root',
     'TOS': 'tos',

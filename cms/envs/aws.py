@@ -95,7 +95,7 @@ SESSION_COOKIE_DOMAIN = ENV_TOKENS.get('SESSION_COOKIE_DOMAIN')
 SESSION_ENGINE = ENV_TOKENS.get('SESSION_ENGINE', SESSION_ENGINE)
 
 # allow for environments to specify what cookie name our login subsystem should use
-# this is to fix a bug regarding simultaneous logins between example.com and edge.example.com which can
+# this is to fix a bug regarding simultaneous logins between edx.org and edge.edx.org which can
 # happen with some browsers (e.g. Firefox)
 if ENV_TOKENS.get('SESSION_COOKIE_NAME', None):
     # NOTE, there's a bug in Django (http://bugs.python.org/issue18012) which necessitates this being a str()
@@ -170,15 +170,6 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(CELERY_BROKER_TRANSPORT,
                                             CELERY_BROKER_PASSWORD,
                                             CELERY_BROKER_HOSTNAME,
                                             CELERY_BROKER_VHOST)
-
-FORCE_SCRIPT_NAME = ENV_TOKENS.get("FORCE_SCRIPT_NAME")
-
-######################CVN############
-INSTALLED_APPS += ('wind','cvncms')
-LMS_URL = ENV_TOKENS.get("LMS_URL")
-LTI_LAUNCH_URL = ENV_TOKENS.get("LTI_LAUNCH_URL")
-LTI_CONSUMER_KEY = ENV_TOKENS.get("LTI_CONSUMER_KEY")
-LTI_CONSUMER_SECRET = ENV_TOKENS.get("LTI_CONSUMER_SECRET")
 
 # Event tracking
 TRACKING_BACKENDS.update(AUTH_TOKENS.get("TRACKING_BACKENDS", {}))
