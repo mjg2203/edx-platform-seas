@@ -28,11 +28,8 @@ MITX_FEATURES['USE_CUSTOM_THEME'] = True
 SITE_NAME = "lms.cvn.columbia.edu"
 
 DATABASES['cvn_php'] = {
-    "HOST": 'example.com',
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'joaquin',
-    'USER': 'joaquin',
-    'PASSWORD': 'PASSWORD_REDACTED'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ENV_ROOT / "db" / "cvn_php_dev.db",
 }
 
 MIDDLEWARE_CLASSES += ('wind.middleware.DisableCSRF',)
