@@ -57,13 +57,14 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ENV_ROOT / "db" / "mitx.db",
     },
-    'cvn_php': {
-        "HOST": 'example.com',
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'joaquin',
-        'USER': 'joaquin',
-        'PASSWORD': 'PASSWORD_REDACTED'
-    }
+    #
+    #'cvn_php': {
+    #    "HOST": 'example.com',
+    #    'ENGINE': 'django.db.backends.mysql',
+    #    'NAME': 'joaquin',
+    #    'USER': 'joaquin',
+    #    'PASSWORD': 'PASSWORD_REDACTED'
+    #}'''
 }
 
 CACHES = {
