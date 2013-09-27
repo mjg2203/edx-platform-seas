@@ -47,7 +47,6 @@ site_status_msg = get_site_status_msg(course_id)
         <img src="${static.url(branding.get_logo_url(request.META.get('HTTP_HOST')))}" alt="${_('{settings.PLATFORM_NAME} home')}" />
       </%block>
     </a>
-  </h1>
 
     % if course:
       <h2><span class="provider">${course.display_org_with_default | h}:</span> ${course.display_number_with_default | h} ${course.display_name_with_default}</h2>
