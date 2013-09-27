@@ -122,7 +122,7 @@ $form-bg-color: $gray-1;
 $modal-bg-color: $gray-1;
 
 //TOP HEADER IMAGE MARGIN
-$header_image_margin: -5px;
+$header_image_margin: -7px;
 
 //FOOTER MARGIN
 $footer_margin: ($baseline/4) 0;
@@ -130,7 +130,7 @@ $footer_margin: ($baseline/4) 0;
 //-----------------
 //  CSS BG Images
 //-----------------
-$homepage-bg-image: 'http://upload.wikimedia.org/wikipedia/commons/9/93/Alma_Mater_and_the_Library_of_Columbia_University_%285892392091%29.jpg';
+$homepage-bg-image: '../themes/stanford/images/columbia_homepage_ym.jpg';
 
 $login-banner-image: none;
 $register-banner-image: none;
