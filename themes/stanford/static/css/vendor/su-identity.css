@@ -5,6 +5,9 @@
  * Last edited: 4/19/2013 by Nate Hardison <nate@edx.org>
  */
 
+#su-header .su-container,
+#su-footer .su-container {
+  margin: 0 auto;
 }
 
 #su-header .span2,
