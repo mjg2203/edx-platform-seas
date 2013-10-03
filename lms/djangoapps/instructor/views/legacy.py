@@ -814,7 +814,9 @@ def instructor_dashboard(request, course_id):
     # HTML editor for email
     if idash_mode == 'Email' and is_studio_course:
         html_module = HtmlDescriptor(course.system, DictFieldData({'data': html_message}), ScopeIds(None, None, None, None))
-        email_editor = wrap_xmodule(html_module.get_html, html_module, 'xmodule_edit.html')()
+        fragment = course.system.render(html_module, None, 'studio_view')
+        fragment = wrap_xmodule('xmodule_edit.html', html_module, 'studio_view', fragment, None)
+        email_editor = fragment.content
 
     studio_url = None
     if is_studio_course:
@@ -1017,7 +1019,7 @@ def _add_or_remove_user_group(request, username_or_email, group, group_title, ev
         else:
             user = User.objects.get(username=username_or_email)
     except User.DoesNotExist:
-        msg = '<font color="red">Error: unknown username or email "{0}"</font>'.format(username_or_email)
+        msg = u'<font color="red">Error: unknown username or email "{0}"</font>'.format(username_or_email)
         user = None
 
     if user is not None:

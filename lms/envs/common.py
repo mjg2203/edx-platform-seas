@@ -179,6 +179,9 @@ MITX_FEATURES = {
 
     # Enable flow for payments for course registration (DIFFERENT from verified student flow)
     'ENABLE_PAID_COURSE_REGISTRATION': False,
+
+    # Automatically approve student identity verification attempts
+    'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': False,
 }
 
 # Used for A/B testing
@@ -362,6 +365,10 @@ MODULESTORE = {
     }
 }
 CONTENTSTORE = None
+
+# Should we initialize the modulestores at startup, or wait until they are
+# needed?
+INIT_MODULESTORE_ON_STARTUP = True
 
 ############# XBlock Configuration ##########
 
