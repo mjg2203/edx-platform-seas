@@ -32,10 +32,12 @@ from .discussionsettings import *
 
 from lms.xblock.mixin import LmsBlockMixin
 from xmodule.modulestore.inheritance import InheritanceMixin
+from xmodule.x_module import XModuleMixin
 
 ################################### FEATURES ###################################
 # The display name of the platform to be used in templates/emails/etc.
 PLATFORM_NAME = "edX"
+CC_MERCHANT_NAME = PLATFORM_NAME
 
 COURSEWARE_ENABLED = True
 ENABLE_JASMINE = False
@@ -94,12 +96,17 @@ MITX_FEATURES = {
     'AUTH_USE_OPENID': False,
     'AUTH_USE_MIT_CERTIFICATES': False,
     'AUTH_USE_OPENID_PROVIDER': False,
+    # Even though external_auth is in common, shib assumes the LMS views / urls, so it should only be enabled
+    # in LMS
     'AUTH_USE_SHIB': False,
     'AUTH_USE_CAS': False,
 
     # This flag disables the requirement of having to agree to the TOS for users registering
     # with Shib.  Feature was requested by Stanford's office of general counsel
     'SHIB_DISABLE_TOS': False,
+
+    # Can be turned off if course lists need to be hidden. Effects views and templates.
+    'COURSES_ARE_BROWSABLE': True,
 
     # Enables ability to restrict enrollment in specific courses by the user account login method
     'RESTRICT_ENROLL_BY_REG_METHOD': False,
@@ -142,8 +149,8 @@ MITX_FEATURES = {
     # Toggle to indicate use of a custom theme
     'USE_CUSTOM_THEME': True,
 
-    # Do autoplay videos for students
-    'AUTOPLAY_VIDEOS': True,
+    # Don't autoplay videos for students
+    'AUTOPLAY_VIDEOS': False,
 
     # Enable instructor dash to submit background tasks
     'ENABLE_INSTRUCTOR_BACKGROUND_TASKS': True,
@@ -169,6 +176,9 @@ MITX_FEATURES = {
 
     # Toggle storing detailed billing information
     'STORE_BILLING_INFO': False,
+
+    # Enable flow for payments for course registration (DIFFERENT from verified student flow)
+    'ENABLE_PAID_COURSE_REGISTRATION': False,
 }
 
 # Used for A/B testing
@@ -275,10 +285,6 @@ RSS_TIMEOUT = 600
 STATIC_GRAB = False
 DEV_CONTENT = True
 
-# FIXME: Should we be doing this truncation?
-TRACK_MAX_EVENT = 10000
-DEBUG_TRACK_LOG = False
-
 MITX_ROOT_URL = ''
 
 LOGIN_REDIRECT_URL = MITX_ROOT_URL + '/accounts/login'
@@ -310,6 +316,36 @@ COURSE_SETTINGS = {
 # TODO (vshnayder): Will probably need to change as we get real access control in.
 LMS_MIGRATION_ALLOWED_IPS = []
 
+
+############################## EVENT TRACKING #################################
+
+# FIXME: Should we be doing this truncation?
+TRACK_MAX_EVENT = 10000
+
+DEBUG_TRACK_LOG = False
+
+TRACKING_BACKENDS = {
+    'logger': {
+        'ENGINE': 'track.backends.logger.LoggerBackend',
+        'OPTIONS': {
+            'name': 'tracking'
+        }
+    }
+}
+
+# Backawrds compatibility with ENABLE_SQL_TRACKING_LOGS feature flag.
+# In the future, adding the backend to TRACKING_BACKENDS enough.
+if MITX_FEATURES.get('ENABLE_SQL_TRACKING_LOGS'):
+    TRACKING_BACKENDS.update({
+        'sql': {
+            'ENGINE': 'track.backends.django.DjangoBackend'
+        }
+    })
+
+# We're already logging events, and we don't want to capture user
+# names/passwords.  Heartbeat events are likely not interesting.
+TRACKING_IGNORE_URL_PATTERNS = [r'^/event', r'^/login', r'^/heartbeat']
+
 ######################## subdomain specific settings ###########################
 COURSE_LISTINGS = {}
 SUBDOMAIN_BRANDING = {}
@@ -331,7 +367,7 @@ CONTENTSTORE = None
 
 # This should be moved into an XBlock Runtime/Application object
 # once the responsibility of XBlock creation is moved out of modulestore - cpennington
-XBLOCK_MIXINS = (LmsBlockMixin, InheritanceMixin)
+XBLOCK_MIXINS = (LmsBlockMixin, InheritanceMixin, XModuleMixin)
 
 #################### Python sandbox ############################################
 
@@ -471,7 +507,8 @@ CC_PROCESSOR = {
         'PURCHASE_ENDPOINT': '',
     }
 }
-
+# Setting for PAID_COURSE_REGISTRATION, DOES NOT AFFECT VERIFIED STUDENTS
+PAID_COURSE_REGISTRATION_CURRENCY = ['usd', '$']
 ################################# open ended grading config  #####################
 
 #By setting up the default settings with an incorrect user name and password,
@@ -494,6 +531,14 @@ MOCK_STAFF_GRADING = False
 ################################# Jasmine ###################################
 JASMINE_TEST_DIRECTORY = PROJECT_ROOT + '/static/coffee'
 
+################################# Waffle ###################################
+
+# Name prepended to cookies set by Waffle
+WAFFLE_COOKIE = "waffle_flag_%s"
+
+# Two weeks (in sec)
+WAFFLE_MAX_AGE = 1209600
+
 ################################# Middleware ###################################
 # List of finder classes that know how to find static files in
 # various locations.
@@ -513,7 +558,6 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
-    'contentserver.middleware.StaticContentServer',
     'request_cache.middleware.RequestCache',
     'django_comment_client.middleware.AjaxExceptionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -522,6 +566,7 @@ MIDDLEWARE_CLASSES = (
     # Instead of AuthenticationMiddleware, we use a cached backed version
     #'django.contrib.auth.middleware.AuthenticationMiddleware',
     'cache_toolbox.middleware.CacheBackedAuthenticationMiddleware',
+    'contentserver.middleware.StaticContentServer',
 
     'django.contrib.messages.middleware.MessageMiddleware',
     'track.middleware.TrackMiddleware',
@@ -542,6 +587,9 @@ MIDDLEWARE_CLASSES = (
     # catches any uncaught RateLimitExceptions and returns a 403 instead of a 500
     'ratelimitbackend.middleware.RateLimitMiddleware',
     'wind.middleware.DisableCSRF',
+
+    # For A/B testing
+    'waffle.middleware.WaffleMiddleware',
 )
 
 ############################### Pipeline #######################################
@@ -789,7 +837,7 @@ INSTALLED_APPS = (
     # External auth (OpenID, shib)
     'external_auth',
 
-    #For the wiki
+    # For the wiki
     'wiki',  # The new django-wiki from benjaoming
     'django_notify',
     'course_wiki',  # Our customizations
@@ -800,8 +848,11 @@ INSTALLED_APPS = (
     'wiki.plugins.notifications',
     'course_wiki.plugins.markdownedx',
 
-    # foldit integration
+    # Foldit integration
     'foldit',
+
+    # For A/B testing
+    'waffle',
 
     # For testing
     'django.contrib.admin',  # only used in DEBUG mode
@@ -813,11 +864,14 @@ INSTALLED_APPS = (
     'django_comment_common',
     'notes',
 
+    # Monitoring
+    'datadog',
+
     # User API
     'rest_framework',
     'user_api',
 
-    # shopping cart
+    # Shopping cart
     'shoppingcart',
 
     # Notification preferences setting

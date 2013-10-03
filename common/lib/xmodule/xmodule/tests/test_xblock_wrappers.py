@@ -74,7 +74,7 @@ class TestXBlockWrapper(object):
             anonymous_student_id='dummy_anonymous_student_id',
             open_ended_grading_interface={},
             ajax_url='dummy_ajax_url',
-            xblock_field_data=lambda d: d._field_data,
+            xmodule_field_data=lambda d: d._field_data,
             get_module=Mock(),
             replace_urls=Mock(),
             track_function=Mock(),
@@ -87,8 +87,8 @@ class TestXBlockWrapper(object):
         runtime.render_template = lambda *args, **kwargs: u'{!r}, {!r}'.format(args, kwargs)
         return runtime.construct_xblock_from_class(
             descriptor_cls,
+            ScopeIds(None, descriptor_cls.__name__, location, location),
             DictFieldData({}),
-            ScopeIds(None, descriptor_cls.__name__, location, location)
         )
 
     def leaf_module(self, descriptor_cls):
@@ -109,10 +109,10 @@ class TestXBlockWrapper(object):
         runtime.render_template = lambda *args, **kwargs: u'{!r}, {!r}'.format(args, kwargs)
         return runtime.construct_xblock_from_class(
             descriptor_cls,
+            ScopeIds(None, descriptor_cls.__name__, location, location),
             DictFieldData({
                 'children': range(3)
             }),
-            ScopeIds(None, descriptor_cls.__name__, location, location)
         )
 
     def container_module(self, descriptor_cls, depth):

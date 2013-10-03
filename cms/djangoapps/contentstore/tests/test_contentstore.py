@@ -55,6 +55,8 @@ from uuid import uuid4
 from pymongo import MongoClient
 from student.models import CourseEnrollment
 
+from contentstore.utils import delete_course_and_groups
+
 TEST_DATA_CONTENTSTORE = copy.deepcopy(settings.CONTENTSTORE)
 TEST_DATA_CONTENTSTORE['OPTIONS']['db'] = 'test_xcontent_%s' % uuid4().hex
 
@@ -167,6 +169,16 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
             print descriptor.__class__, descriptor.location
             resp = self.client.get(reverse('edit_unit', kwargs={'location': descriptor.location.url()}))
             self.assertEqual(resp.status_code, 200)
+
+    def lockAnAsset(self, content_store, course_location):
+        """
+        Lock an arbitrary asset in the course
+        :param course_location:
+        """
+        course_assets = content_store.get_all_content_for_course(course_location)
+        self.assertGreater(len(course_assets), 0, "No assets to lock")
+        content_store.set_attr(course_assets[0]['_id'], 'locked', True)
+        return course_assets[0]['_id']
 
     def test_edit_unit_toy(self):
         self.check_edit_unit('toy')
@@ -351,7 +363,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
     def test_create_static_tab_and_rename(self):
         module_store = modulestore('direct')
         CourseFactory.create(org='edX', course='999', display_name='Robot Super Course')
-        course_location = Location(['i4x', 'edX', '999', 'course', 'Robot_Super_Course', None])    
+        course_location = Location(['i4x', 'edX', '999', 'course', 'Robot_Super_Course', None])
 
         item = ItemFactory.create(parent_location=course_location, category='static_tab', display_name="My Tab")
 
@@ -591,9 +603,9 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
         # go through the website to do the delete, since the soft-delete logic is in the view
 
-        url = reverse('remove_asset', kwargs={'org': 'edX', 'course': 'toy', 'name': '2012_Fall'})
-        resp = self.client.post(url, {'location': '/c4x/edX/toy/asset/sample_static.txt'})
-        self.assertEqual(resp.status_code, 200)
+        url = reverse('update_asset', kwargs={'org': 'edX', 'course': 'toy', 'name': '2012_Fall', 'asset_id': '/c4x/edX/toy/asset/sample_static.txt'})
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 204)
 
         asset_location = StaticContent.get_location_from_path('/c4x/edX/toy/asset/sample_static.txt')
 
@@ -626,7 +638,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
     def test_empty_trashcan(self):
         '''
-        This test will exercise the empting of the asset trashcan
+        This test will exercise the emptying of the asset trashcan
         '''
         content_store = contentstore()
         trash_store = contentstore('trashcan')
@@ -642,9 +654,9 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
         # go through the website to do the delete, since the soft-delete logic is in the view
 
-        url = reverse('remove_asset', kwargs={'org': 'edX', 'course': 'toy', 'name': '2012_Fall'})
-        resp = self.client.post(url, {'location': '/c4x/edX/toy/asset/sample_static.txt'})
-        self.assertEqual(resp.status_code, 200)
+        url = reverse('update_asset', kwargs={'org': 'edX', 'course': 'toy', 'name': '2012_Fall', 'asset_id': '/c4x/edX/toy/asset/sample_static.txt'})
+        resp = self.client.delete(url)
+        self.assertEqual(resp.status_code, 204)
 
         # make sure there's something in the trashcan
         all_assets = trash_store.get_all_content_for_course(course_location)
@@ -733,7 +745,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
 
             # we want to assert equality between the objects, but we know the locations
             # differ, so just make them equal for testing purposes
-            source_item.scope_ids = source_item.scope_ids._replace(def_id=new_loc, usage_id=new_loc)
+            source_item.location = new_loc
             if hasattr(source_item, 'data') and hasattr(lookup_item, 'data'):
                 self.assertEqual(source_item.data, lookup_item.data)
 
@@ -905,7 +917,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         draft_store = modulestore('draft')
         content_store = contentstore()
 
-        import_from_xml(module_store, 'common/test/data/', ['toy'])
+        import_from_xml(module_store, 'common/test/data/', ['toy'], static_content_store=content_store)
         location = CourseDescriptor.id_to_location('edX/toy/2012_Fall')
 
         # get a vertical (and components in it) to copy into an orphan sub dag
@@ -914,8 +926,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
             depth=1
         )
         # We had a bug where orphaned draft nodes caused export to fail. This is here to cover that case.
-        draft_loc = mongo.draft.as_draft(vertical.location.replace(name='no_references'))
-        vertical.scope_ids = vertical.scope_ids._replace(def_id=draft_loc, usage_id=draft_loc)
+        vertical.location = mongo.draft.as_draft(vertical.location.replace(name='no_references'))
 
         draft_store.save_xmodule(vertical)
         orphan_vertical = draft_store.get_item(vertical.location)
@@ -933,8 +944,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         root_dir = path(mkdtemp_clean())
 
         # now create a new/different private (draft only) vertical
-        draft_loc = mongo.draft.as_draft(Location(['i4x', 'edX', 'toy', 'vertical', 'a_private_vertical', None]))
-        vertical.scope_ids = vertical.scope_ids._replace(def_id=draft_loc, usage_id=draft_loc)
+        vertical.location = mongo.draft.as_draft(Location(['i4x', 'edX', 'toy', 'vertical', 'a_private_vertical', None]))
         draft_store.save_xmodule(vertical)
         private_vertical = draft_store.get_item(vertical.location)
         vertical = None  # blank out b/c i destructively manipulated its location 2 lines above
@@ -951,6 +961,11 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
                                                      'sequential', 'vertical_sequential', None]))
 
         self.assertIn(private_location_no_draft.url(), sequential.children)
+
+        locked_asset = self.lockAnAsset(content_store, location)
+        locked_asset_attrs = content_store.get_attrs(locked_asset)
+        # the later import will reupload
+        del locked_asset_attrs['uploadDate']
 
         print 'Exporting to tempdir = {0}'.format(root_dir)
 
@@ -983,12 +998,34 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
             self.assertEqual(on_disk['course/2012_Fall'], own_metadata(course))
 
         # remove old course
-        delete_course(module_store, content_store, location)
+        delete_course(module_store, content_store, location, commit=True)
+        # reimport over old course
+        stub_location = Location(['i4x', 'edX', 'toy', None, None])
+        course_location = course.location
+        self.check_import(
+            module_store, root_dir, draft_store, content_store, stub_location, course_location,
+            locked_asset, locked_asset_attrs
+        )
+        # import to different course id
+        stub_location = Location(['i4x', 'anotherX', 'anotherToy', None, None])
+        course_location = stub_location.replace(category='course', name='Someday')
+        self.check_import(
+            module_store, root_dir, draft_store, content_store, stub_location, course_location,
+            locked_asset, locked_asset_attrs
+        )
 
+        shutil.rmtree(root_dir)
+
+    def check_import(self, module_store, root_dir, draft_store, content_store, stub_location, course_location,
+        locked_asset, locked_asset_attrs):
         # reimport
-        import_from_xml(module_store, root_dir, ['test_export'], draft_store=draft_store)
+        import_from_xml(
+            module_store, root_dir, ['test_export'], draft_store=draft_store,
+            static_content_store=content_store,
+            target_location_namespace=course_location
+        )
 
-        items = module_store.get_items(Location(['i4x', 'edX', 'toy', 'vertical', None]))
+        items = module_store.get_items(stub_location.replace(category='vertical', name=None))
         self.assertGreater(len(items), 0)
         for descriptor in items:
             # don't try to look at private verticals. Right now we're running
@@ -999,11 +1036,13 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
                 self.assertEqual(resp.status_code, 200)
 
         # verify that we have the content in the draft store as well
-        vertical = draft_store.get_item(Location(['i4x', 'edX', 'toy',
-                                                  'vertical', 'vertical_test', None]), depth=1)
+        vertical = draft_store.get_item(
+            stub_location.replace(category='vertical', name='vertical_test', revision=None),
+            depth=1
+        )
 
         self.assertTrue(getattr(vertical, 'is_draft', False))
-        self.assertNotIn('index_in_children_list', child.xml_attributes)
+        self.assertNotIn('index_in_children_list', vertical.xml_attributes)
         self.assertNotIn('parent_sequential_url', vertical.xml_attributes)
 
         for child in vertical.get_children():
@@ -1016,23 +1055,34 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
                 self.assertNotIn('parent_sequential_url', child.data)
 
         # make sure that we don't have a sequential that is in draft mode
-        sequential = draft_store.get_item(Location(['i4x', 'edX', 'toy',
-                                                    'sequential', 'vertical_sequential', None]))
+        sequential = draft_store.get_item(
+            stub_location.replace(category='sequential', name='vertical_sequential', revision=None)
+        )
 
         self.assertFalse(getattr(sequential, 'is_draft', False))
 
         # verify that we have the private vertical
-        test_private_vertical = draft_store.get_item(Location(['i4x', 'edX', 'toy',
-                                                               'vertical', 'a_private_vertical', None]))
+        test_private_vertical = draft_store.get_item(
+            stub_location.replace(category='vertical', name='a_private_vertical', revision=None)
+        )
 
         self.assertTrue(getattr(test_private_vertical, 'is_draft', False))
 
         # make sure the textbook survived the export/import
-        course = module_store.get_item(Location(['i4x', 'edX', 'toy', 'course', '2012_Fall', None]))
+        course = module_store.get_item(course_location)
 
         self.assertGreater(len(course.textbooks), 0)
 
-        shutil.rmtree(root_dir)
+        locked_asset['course'] = stub_location.course
+        locked_asset['org'] = stub_location.org
+        new_attrs = content_store.get_attrs(locked_asset)
+        for key, value in locked_asset_attrs.iteritems():
+            if key == '_id':
+                self.assertEqual(value['name'], new_attrs[key]['name'])
+            elif key == 'filename':
+                pass
+            else:
+                self.assertEqual(value, new_attrs[key])
 
     def test_export_course_with_metadata_only_video(self):
         module_store = modulestore('direct')
@@ -1291,6 +1341,28 @@ class ContentStoreTest(ModuleStoreTestCase):
         """Test new course creation and verify forum seeding """
         test_course_data = self.assert_created_course(number_suffix=uuid4().hex)
         self.assertTrue(are_permissions_roles_seeded(self._get_course_id(test_course_data)))
+
+    def test_forum_unseeding_on_delete(self):
+        """Test new course creation and verify forum unseeding """
+        test_course_data = self.assert_created_course(number_suffix=uuid4().hex)
+        self.assertTrue(are_permissions_roles_seeded(self._get_course_id(test_course_data)))
+        course_id = self._get_course_id(test_course_data)
+        delete_course_and_groups(course_id, commit=True)
+        self.assertFalse(are_permissions_roles_seeded(course_id))
+
+    def test_forum_unseeding_with_multiple_courses(self):
+        """Test new course creation and verify forum unseeding when there are multiple courses"""
+        test_course_data = self.assert_created_course(number_suffix=uuid4().hex)
+        second_course_data = self.assert_created_course(number_suffix=uuid4().hex)
+
+        # unseed the forums for the first course
+        course_id = self._get_course_id(test_course_data)
+        delete_course_and_groups(course_id, commit=True)
+        self.assertFalse(are_permissions_roles_seeded(course_id))
+
+        second_course_id = self._get_course_id(second_course_data)
+        # permissions should still be there for the other course
+        self.assertTrue(are_permissions_roles_seeded(second_course_id))
 
     def _get_course_id(self, test_course_data):
         """Returns the course ID (org/number/run)."""

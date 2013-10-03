@@ -11,15 +11,11 @@ import json
 import os
 import unittest
 
-import fs
-import fs.osfs
-import numpy
 from mock import Mock
 from path import path
 
-import calc
 from xblock.field_data import DictFieldData
-from xmodule.x_module import ModuleSystem, XModuleDescriptor, DescriptorSystem
+from xmodule.x_module import ModuleSystem, XModuleDescriptor, XModuleMixin
 from xmodule.modulestore.inheritance import InheritanceMixin
 from xmodule.mako_module import MakoDescriptorSystem
 
@@ -62,9 +58,10 @@ def get_test_system(course_id=''):
         user=Mock(is_staff=False),
         filestore=Mock(),
         debug=True,
+        hostname="edx.org",
         xqueue={'interface': None, 'callback_url': '/', 'default_queuename': 'testqueue', 'waittime': 10, 'construct_callback' : Mock(side_effect="/")},
         node_path=os.environ.get("NODE_PATH", "/usr/local/lib/node_modules"),
-        xblock_field_data=lambda descriptor: descriptor._field_data,
+        xmodule_field_data=lambda descriptor: descriptor._field_data,
         anonymous_student_id='student',
         open_ended_grading_interface=open_ended_grading_interface,
         course_id=course_id,
@@ -80,7 +77,7 @@ def get_test_descriptor_system():
         resources_fs=Mock(),
         error_tracker=Mock(),
         render_template=lambda template, context: repr(context),
-        mixins=(InheritanceMixin,),
+        mixins=(InheritanceMixin, XModuleMixin),
     )
 
 

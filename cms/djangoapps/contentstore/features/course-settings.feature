@@ -1,4 +1,5 @@
-Feature: Course Settings
+@shard_2
+Feature: CMS.Course Settings
   As a course author, I want to be able to configure my course settings.
 
   # Safari has trouble keeps dates on refresh
@@ -87,7 +88,7 @@ Feature: Course Settings
     Given I have opened a new course in Studio
     When I select Schedule and Details
     And I change the "Course Start Date" field to ""
-    Then the save button is disabled
+    Then the save notification button is disabled
 
   Scenario: User can upload course image
     Given I have opened a new course in Studio

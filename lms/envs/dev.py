@@ -28,7 +28,7 @@ enable_theme(THEME_NAME)
 FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
 
-MITX_FEATURES['DISABLE_START_DATES'] = True
+MITX_FEATURES['DISABLE_START_DATES'] = False
 MITX_FEATURES['ENABLE_SQL_TRACKING_LOGS'] = True
 MITX_FEATURES['SUBDOMAIN_COURSE_LISTINGS'] = False  # Enable to test subdomains--otherwise, want all courses to show up
 MITX_FEATURES['SUBDOMAIN_BRANDING'] = True
@@ -271,7 +271,7 @@ ANALYTICS_API_KEY = ""
 
 ##### segment-io  ######
 
-# If there's an environment variable set, grab it and turn on segment io
+# If there's an environment variable set, grab it and turn on Segment.io
 SEGMENT_IO_LMS_KEY = os.environ.get('SEGMENT_IO_LMS_KEY')
 if SEGMENT_IO_LMS_KEY:
     MITX_FEATURES['SEGMENT_IO_LMS'] = True

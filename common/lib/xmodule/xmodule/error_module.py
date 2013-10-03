@@ -105,10 +105,10 @@ class ErrorDescriptor(ErrorFields, XModuleDescriptor):
         })
         return system.construct_xblock_from_class(
             cls,
-            field_data,
             # The error module doesn't use scoped data, and thus doesn't need
             # real scope keys
-            ScopeIds('error', None, location, location)
+            ScopeIds('error', None, location, location),
+            field_data,
         )
 
     def get_context(self):
@@ -129,7 +129,7 @@ class ErrorDescriptor(ErrorFields, XModuleDescriptor):
     @classmethod
     def from_descriptor(cls, descriptor, error_msg='Error not available'):
         return cls._construct(
-            descriptor.system,
+            descriptor.runtime,
             str(descriptor),
             error_msg,
             location=descriptor.location,

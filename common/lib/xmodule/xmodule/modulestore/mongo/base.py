@@ -17,6 +17,7 @@ import sys
 import logging
 import copy
 
+from bson.son import SON
 from fs.osfs import OSFS
 from itertools import repeat
 from path import path
@@ -31,7 +32,7 @@ from xblock.runtime import DbModel
 from xblock.exceptions import InvalidScopeError
 from xblock.fields import Scope, ScopeIds
 
-from xmodule.modulestore import ModuleStoreBase, Location, namedtuple_to_son, MONGO_MODULESTORE_TYPE
+from xmodule.modulestore import ModuleStoreBase, Location, MONGO_MODULESTORE_TYPE
 from xmodule.modulestore.exceptions import ItemNotFoundError
 from xmodule.modulestore.inheritance import own_metadata, InheritanceMixin, inherit_metadata, InheritanceKeyValueStore
 
@@ -192,7 +193,7 @@ class CachingDescriptorSystem(MakoDescriptorSystem):
 
                 field_data = DbModel(kvs)
                 scope_ids = ScopeIds(None, category, location, location)
-                module = self.construct_xblock_from_class(class_, field_data, scope_ids)
+                module = self.construct_xblock_from_class(class_, scope_ids, field_data)
                 if self.cached_metadata is not None:
                     # parent container pointers don't differentiate between draft and non-draft
                     # so when we do the lookup, we should do so with a non-draft location
@@ -213,6 +214,16 @@ class CachingDescriptorSystem(MakoDescriptorSystem):
                     json_data['location'],
                     error_msg=exc_info_to_str(sys.exc_info())
                 )
+
+
+def namedtuple_to_son(namedtuple, prefix=''):
+    """
+    Converts a namedtuple into a SON object with the same key order
+    """
+    son = SON()
+    for idx, field_name in enumerate(namedtuple._fields):
+        son[prefix + field_name] = namedtuple[idx]
+    return son
 
 
 def location_to_query(location, wildcard=True):
@@ -313,16 +324,14 @@ class MongoModuleStore(ModuleStoreBase):
         for result in resultset:
             location = Location(result['_id'])
             # We need to collate between draft and non-draft
-            # i.e. draft verticals can have children which are not in non-draft versions
+            # i.e. draft verticals will have draft children but will have non-draft parents currently
             location = location.replace(revision=None)
             location_url = location.url()
             if location_url in results_by_url:
                 existing_children = results_by_url[location_url].get('definition', {}).get('children', [])
                 additional_children = result.get('definition', {}).get('children', [])
                 total_children = existing_children + additional_children
-                if 'definition' not in results_by_url[location_url]:
-                    results_by_url[location_url]['definition'] = {}
-                results_by_url[location_url]['definition']['children'] = total_children
+                results_by_url[location_url].setdefault('definition', {})['children'] = total_children
             results_by_url[location.url()] = result
             if location.category == 'course':
                 root = location.url()
@@ -605,19 +614,18 @@ class MongoModuleStore(ModuleStoreBase):
             )
         xblock_class = XModuleDescriptor.load_class(location.category, self.default_class)
         if definition_data is None:
-            if hasattr(xblock_class, 'data') and getattr(xblock_class, 'data').default is not None:
-                definition_data = getattr(xblock_class, 'data').default
+            if hasattr(xblock_class, 'data') and xblock_class.data.default is not None:
+                definition_data = xblock_class.data.default
             else:
                 definition_data = {}
         dbmodel = self._create_new_field_data(location.category, location, definition_data, metadata)
         xmodule = system.construct_xblock_from_class(
             xblock_class,
-            dbmodel,
-
             # We're loading a descriptor, so student_id is meaningless
             # We also don't have separate notions of definition and usage ids yet,
             # so we use the location for both.
-            ScopeIds(None, location.category, location, location)
+            ScopeIds(None, location.category, location, location),
+            dbmodel,
         )
         # decache any pending field settings from init
         xmodule.save()
@@ -632,12 +640,11 @@ class MongoModuleStore(ModuleStoreBase):
         """
         # Save any changes to the xmodule to the MongoKeyValueStore
         xmodule.save()
-        # split mongo's persist_dag is more general and useful.
         self.collection.save({
                 '_id': xmodule.location.dict(),
                 'metadata': own_metadata(xmodule),
                 'definition': {
-                    'data': xmodule.xblock_kvs._data,
+                    'data': xmodule.get_explicitly_set_fields_by_scope(Scope.content),
                     'children': xmodule.children if xmodule.has_children else []
                 }
             })
