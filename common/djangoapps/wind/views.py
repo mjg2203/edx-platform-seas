@@ -13,6 +13,11 @@ from student.views import _do_create_account
 from student.views import activate_account
 from mitxmako.shortcuts import render_to_response
 
+from courseware.access import has_access
+from courseware.courses import (get_courses, get_course_with_access,
+                                get_courses_by_university, sort_by_announcement)
+from courseware.masquerade import setup_masquerade
+
 from student.models import UserProfile
 from student.models import CourseEnrollment
 
@@ -169,18 +174,32 @@ def piazza_test(request, course_id):
 
     launch_data = consumer.generate_launch_data()
     launch_url = consumer.launch_url
-    
 
+
+    course = get_course_with_access(request.user, course_id, 'load')
+    staff_access = has_access(request.user, course, 'staff')
+    masq = setup_masquerade(request, staff_access)    # allow staff to toggle masquerade on info page
+
+    return render_to_response('courseware/piazza_discussion.html', {'request': request, 'course_id': course_id, 'cache': None,
+            'course': course, 'staff_access': staff_access, 'masquerade': masq, 'launch_url':launch_url, 'launch_data':launch_data})
+    
+'''
     #render a self-submitting form that sends all data to Piazza.com via the LTI standard
-    returnable = '<form id="ltiLaunchFormSubmitArea" action="' + launch_url + '" name="ltiLaunchForm" id="ltiLaunchForm" method="post" encType="application/x-www-form-urlencoded">'
+    returnable = '<iframe width="100%" height="100%" id="frame"></iframe>'
+    returnable += '<script language="javascript">var html = \''
+    returnable += '<form id="ltiLaunchFormSubmitArea" style="display:block" action="' + launch_url + '" name="ltiLaunchForm" id="ltiLaunchForm" method="post" encType="application/x-www-form-urlencoded">'
     for key in launch_data:
         returnable += '<input type="hidden" name="'+ key +'" value="'+ str(launch_data[key]) + '"/>'
     returnable += '<input type="submit" value="Go to Piazza"></input>'
-    returnable += '</form>'
-    returnable += '<script language="javascript">document.getElementById("ltiLaunchFormSubmitArea").style.display = "none";document.ltiLaunchForm.submit();</script>'
+    returnable += '</form>\';'
+    #returnable += '<script language="javascript">document.ltiLaunchForm.submit();</script>\'\n'
+    returnable += "document.getElementById('frame').src = 'data:text/html;charset=utf-8,' + encodeURI(html);\n"
+    returnable += "</script>\n"
+    #returnable += '<script language="javascript">document.getElementById("ltiLaunchFormSubmitArea").style.display = "none";document.ltiLaunchForm.submit();</script>'
     return HttpResponse(returnable)
     result = requests.post(launch_url, params=launch_data)
     return HttpResponse(result.text)
+'''
 
 def course_dashboard(request, org, course, name):
     #TODO: display course roster for a class
