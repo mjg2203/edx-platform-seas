@@ -10,8 +10,8 @@
 //-----------------
 
 //Cardinal Color Variables
-$cardinal-red: #00FF00;
-$dark-red: #75AADB; //Link Color
+$cardinal-red: #75B2DD;
+$dark-red: #75B2DD; //Link Color
 $cardinal-light: #c83737; //Selected Header BG Color, ie. calendar        ***Custom, not from palette***
 $cardinal-bg: #e9afaf; //Selected Content BG Color, ie. calendar          ***Custom, not from palette***
 
@@ -29,7 +29,7 @@ $sandstone-25: lighten($sandstone, 20%); //Important Heading BG Color
 $gray: #3f3c30; //Main Text Color
 $gray-75: lighten($gray, 18.25%); //Lighter Text Color
 
-$gray-3: #e9e6df; //Block/Course BG Color
+$gray-3: #ffffff; //Block/Course BG Color. Previously Gray, now WHITE.
 $gray-2: #f2f1eb;
 $gray-1: #fbfbf9; //Main BG Color
 
@@ -122,7 +122,7 @@ $form-bg-color: $gray-1;
 $modal-bg-color: $gray-1;
 
 //TOP HEADER IMAGE MARGIN
-$header_image_margin: -77px;
+$header_image_margin: -7px;
 
 //FOOTER MARGIN
 $footer_margin: ($baseline/4) 0;
@@ -130,7 +130,7 @@ $footer_margin: ($baseline/4) 0;
 //-----------------
 //  CSS BG Images
 //-----------------
-$homepage-bg-image: '../themes/stanford/images/nyc.jpg';
+$homepage-bg-image: '../themes/stanford/images/columbia_homepage_ym.jpg';
 
 $login-banner-image: none;
 $register-banner-image: none;
@@ -150,4 +150,4 @@ $video-thumb-url: '../themes/stanford/images/stanford-video-thumb.png';
 @mixin footer_references_style {
     margin: 0 !important;
     text-align: right;
-}
+} 

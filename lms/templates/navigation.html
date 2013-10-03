@@ -42,16 +42,14 @@ site_status_msg = get_site_status_msg(course_id)
 % endif
   <nav>
 
-  <h1 class="logo">
     <a href="${marketing_link('ROOT')}">
       <%block name="navigation_logo">
         <img src="${static.url(branding.get_logo_url(request.META.get('HTTP_HOST')))}" alt="${_('{settings.PLATFORM_NAME} home')}" />
       </%block>
     </a>
-  </h1>
 
     % if course:
-      <h2><span class="provider">${course.display_org_with_default | h}:</span> ${course.display_number_with_default | h} ${course.display_name_with_default}</h2>
+      <h2 style="text-shadow : none; font-size:16px;><div style="-webkit-box-shadow: 0 3px 5px #333;"><span class="provider">${course.display_org_with_default | h}:</span> ${course.display_number_with_default | h} ${course.display_name_with_default}</div></h2>
     % endif
 
     % if user.is_authenticated():
@@ -76,7 +74,10 @@ site_status_msg = get_site_status_msg(course_id)
           <%block name="navigation_dropdown_menu_links" >
             <li><a href="${marketing_link('FAQ')}">${_("Help")}</a></li>
           </%block>
-          <li><a href="${reverse('logout')}">${_("Log Out")}</a></li>
+          <li><a href="${('https://web.cvn.columbia.edu/www6/sc/login.php')}">${_("Registration")}</a></li>
+          <li><a href="${('http://bulletin.engineering.columbia.edu')}">${_("University Policy")}</a></li>
+          <li><a href="${('http://cvn.columbia.edu/contact.php')}">${_("Contact")}</a></li>
+          <li><a href="${reverse('logout')}">${_("Log out")}</a></li>
         </ul>
       </li>
     </ol>
@@ -106,13 +107,13 @@ site_status_msg = get_site_status_msg(course_id)
       % endif
     </ol>
 
-    <ol class="right nav-courseware">
-    <li class="nav-courseware-01">
+    
+    
       % if not settings.MITX_FEATURES['DISABLE_LOGIN_BUTTON']:
           % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
-          <a class="cta cta-login" href="${reverse('course-specific-login', args=[course.id])}${login_query()}">${_("Log in")}</a>
-          % else:
-          <a class="cta cta-login" href="${reverse('signin_user')}${login_query()}">${_("Log in with UNI")}</a> <span style="margin:0 10px">or</span> <a href="${settings.CVN_SC_URL}" style="padding:0; font-size:12px; color:#0000aa">Log in through CVN</a>
+          #<a  href="${reverse('course-specific-login', args=[course.id])}${login_query()}">${_("Log in")}</a>
+          #% else:
+          #<a class="cta cta-login" href="${reverse('signin_user')}${login_query()}">${_("Log in with UNI")}</a> <span style="margin:0 10px">or</span> <a href="${settings.CVN_SC_URL}" style="padding:0; font-size:12px; color:#0000aa">Log in through CVN</a>
           % endif
       % endif
     </li>
