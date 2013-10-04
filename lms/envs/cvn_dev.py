@@ -10,6 +10,7 @@ THEME_NAME=ENV_TOKENS.get('THEME_NAME')
 enable_theme(THEME_NAME)
 FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
+LOGIN_URL = '/login'
 
 INSTALLED_APPS += ('wind','cvn')
 WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
