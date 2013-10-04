@@ -1,7 +1,7 @@
 // This code is temporarily moved out of asset_index.html
 // to fix AWS pipelining issues. We can move it back after RequireJS is integrated.
 $(document).ready(function() {
-    $('.uploads .upload-button').bind('click', showUploadModal);
+    $('.view-uploads .upload-button').bind('click', showUploadModal);
     $('.upload-modal .close-button').bind('click', hideModal);
     $('.upload-modal .choose-file-button').bind('click', showFileSelectionMenu);
 });
