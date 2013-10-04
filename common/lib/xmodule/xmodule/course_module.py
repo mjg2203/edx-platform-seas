@@ -6,10 +6,10 @@ from path import path  # NOTE (THK): Only used for detecting presence of syllabu
 import requests
 from datetime import datetime
 import dateutil.parser
+from lazy import lazy
 
 from xmodule.modulestore import Location
 from xmodule.seq_module import SequenceDescriptor, SequenceModule
-from xmodule.util.decorators import lazyproperty
 from xmodule.graders import grader_from_conf
 import json
 
@@ -62,17 +62,22 @@ class Textbook(object):
     def __init__(self, title, book_url):
         self.title = title
         self.book_url = book_url
-        self.start_page = int(self.table_of_contents[0].attrib['page'])
 
+    @lazy
+    def start_page(self):
+        return int(self.table_of_contents[0].attrib['page'])
+
+    @lazy
+    def end_page(self):
         # The last page should be the last element in the table of contents,
         # but it may be nested. So recurse all the way down the last element
         last_el = self.table_of_contents[-1]
         while last_el.getchildren():
             last_el = last_el[-1]
 
-        self.end_page = int(last_el.attrib['page'])
+        return int(last_el.attrib['page'])
 
-    @lazyproperty
+    @lazy
     def table_of_contents(self):
         """
         Accesses the textbook's table of contents (default name "toc.xml") at the URL self.book_url
@@ -337,7 +342,14 @@ class CourseFields(object):
                                       "action_external": False}]}
         ])
     info_sidebar_name = String(scope=Scope.settings, default='Course Handouts')
-    show_timezone = Boolean(help="True if timezones should be shown on dates in the courseware", scope=Scope.settings, default=True)
+    show_timezone = Boolean(
+        help="True if timezones should be shown on dates in the courseware. Deprecated in favor of due_date_display_format.",
+        scope=Scope.settings, default=True
+    )
+    due_date_display_format = String(
+        help="Format supported by strftime for displaying due dates. Takes precedence over show_timezone.",
+        scope=Scope.settings, default=None
+    )
     enrollment_domain = String(help="External login method associated with user accounts allowed to register in course",
                                scope=Scope.settings)
     course_image = String(
@@ -391,7 +403,13 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
             elif isinstance(self.location, CourseLocator):
                 self.wiki_slug = self.location.course_id or self.display_name
 
-        msg = None
+        if self.due_date_display_format is None and self.show_timezone is False:
+            # For existing courses with show_timezone set to False (and no due_date_display_format specified),
+            # set the due_date_display_format to what would have been shown previously (with no timezone).
+            # Then remove show_timezone so that if the user clears out the due_date_display_format,
+            # they get the default date display.
+            self.due_date_display_format = u"%b %d, %Y at %H:%M"
+            delattr(self, 'show_timezone')
 
         # NOTE: relies on the modulestore to call set_grading_policy() right after
         # init.  (Modulestore is in charge of figuring out where to load the policy from)
@@ -725,7 +743,7 @@ class CourseDescriptor(CourseFields, SequenceDescriptor):
 
         return announcement, start, now
 
-    @lazyproperty
+    @lazy
     def grading_context(self):
         """
         This returns a dictionary with keys necessary for quickly grading

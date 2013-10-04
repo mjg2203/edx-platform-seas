@@ -82,7 +82,7 @@ class SequenceModule(SequenceFields, XModule):
         for child in self.get_display_items():
             progress = child.get_progress()
             childinfo = {
-                'content': child.get_html(),
+                'content': self.runtime.render_child(child, None, 'student_view').content,
                 'title': "\n".join(
                     grand_child.display_name
                     for grand_child in child.get_children()
@@ -133,7 +133,7 @@ class SequenceDescriptor(SequenceFields, MakoModuleDescriptor, XmlDescriptor):
             except Exception as e:
                 log.exception("Unable to load child when parsing Sequence. Continuing...")
                 if system.error_tracker is not None:
-                    system.error_tracker("ERROR: " + str(e))
+                    system.error_tracker("ERROR: " + unicode(e))
                 continue
         return {}, children
 

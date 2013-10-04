@@ -59,10 +59,6 @@ def login(request):
         '''
         user = authenticate(request=request, token=request.GET.get('ticketid', ''))
 
-        # FIXME: 
-        # if isinstance(user, HttpResponse):
-            # Raise some kind of exception
-
         if user is not None:
             if user.is_active:
                 print "You provided a correct username and password!"

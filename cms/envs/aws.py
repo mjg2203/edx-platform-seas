@@ -95,7 +95,7 @@ SESSION_COOKIE_DOMAIN = ENV_TOKENS.get('SESSION_COOKIE_DOMAIN')
 SESSION_ENGINE = ENV_TOKENS.get('SESSION_ENGINE', SESSION_ENGINE)
 
 # allow for environments to specify what cookie name our login subsystem should use
-# this is to fix a bug regarding simultaneous logins between example.com and edge.example.com which can
+# this is to fix a bug regarding simultaneous logins between edx.org and edge.edx.org which can
 # happen with some browsers (e.g. Firefox)
 if ENV_TOKENS.get('SESSION_COOKIE_NAME', None):
     # NOTE, there's a bug in Django (http://bugs.python.org/issue18012) which necessitates this being a str()
@@ -127,6 +127,10 @@ LOGGING = get_logger_config(LOG_DIR,
 #theming start:
 PLATFORM_NAME = ENV_TOKENS.get('PLATFORM_NAME', 'edX')
 
+# Event Tracking
+if "TRACKING_IGNORE_URL_PATTERNS" in ENV_TOKENS:
+    TRACKING_IGNORE_URL_PATTERNS = ENV_TOKENS.get("TRACKING_IGNORE_URL_PATTERNS")
+
 
 ################ SECURE AUTH ITEMS ###############################
 # Secret things: passwords, access keys, etc.
@@ -147,7 +151,12 @@ MODULESTORE = AUTH_TOKENS['MODULESTORE']
 CONTENTSTORE = AUTH_TOKENS['CONTENTSTORE']
 
 # Datadog for events!
-DATADOG_API = AUTH_TOKENS.get("DATADOG_API")
+DATADOG = AUTH_TOKENS.get("DATADOG", {})
+DATADOG.update(ENV_TOKENS.get("DATADOG", {}))
+
+# TODO: deprecated (compatibility with previous settings)
+if 'DATADOG_API' in AUTH_TOKENS:
+    DATADOG['api_key'] = AUTH_TOKENS['DATADOG_API']
 
 # Celery Broker
 CELERY_BROKER_TRANSPORT = ENV_TOKENS.get("CELERY_BROKER_TRANSPORT", "")
@@ -162,11 +171,5 @@ BROKER_URL = "{0}://{1}:{2}@{3}/{4}".format(CELERY_BROKER_TRANSPORT,
                                             CELERY_BROKER_HOSTNAME,
                                             CELERY_BROKER_VHOST)
 
-FORCE_SCRIPT_NAME = ENV_TOKENS.get("FORCE_SCRIPT_NAME")
-
-######################CVN############
-INSTALLED_APPS += ('wind','cvncms')
-LMS_URL = ENV_TOKENS.get("LMS_URL")
-LTI_LAUNCH_URL = ENV_TOKENS.get("LTI_LAUNCH_URL")
-LTI_CONSUMER_KEY = ENV_TOKENS.get("LTI_CONSUMER_KEY")
-LTI_CONSUMER_SECRET = ENV_TOKENS.get("LTI_CONSUMER_SECRET")
+# Event tracking
+TRACKING_BACKENDS.update(AUTH_TOKENS.get("TRACKING_BACKENDS", {}))

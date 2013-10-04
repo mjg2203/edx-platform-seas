@@ -14,21 +14,12 @@ sessions. Assumes structure:
 
 from .common import *
 from logsettings import get_logger_config
-import json
 
 DEBUG = True
 TEMPLATE_DEBUG = True
 
-with open(ENV_ROOT / "env.json") as env_file:
-    ENV_TOKENS = json.load(env_file)
 
-THEME_NAME=ENV_TOKENS.get('THEME_NAME', None)
-
-enable_theme(THEME_NAME)
-FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
-
-
-MITX_FEATURES['DISABLE_START_DATES'] = True
+MITX_FEATURES['DISABLE_START_DATES'] = False
 MITX_FEATURES['ENABLE_SQL_TRACKING_LOGS'] = True
 MITX_FEATURES['SUBDOMAIN_COURSE_LISTINGS'] = False  # Enable to test subdomains--otherwise, want all courses to show up
 MITX_FEATURES['SUBDOMAIN_BRANDING'] = True
@@ -41,6 +32,7 @@ MITX_FEATURES['ENABLE_HINTER_INSTRUCTOR_VIEW'] = True
 MITX_FEATURES['ENABLE_INSTRUCTOR_BETA_DASHBOARD'] = True
 MITX_FEATURES['MULTIPLE_ENROLLMENT_ROLES'] = True
 MITX_FEATURES['ENABLE_SHOPPING_CART'] = True
+MITX_FEATURES['AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING'] = True
 
 FEEDBACK_SUBMISSION_EMAIL = "dummy@example.com"
 
@@ -56,15 +48,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': ENV_ROOT / "db" / "mitx.db",
-    },
-    #
-    #'cvn_php': {
-    #    "HOST": 'example.com',
-    #    'ENGINE': 'django.db.backends.mysql',
-    #    'NAME': 'joaquin',
-    #    'USER': 'joaquin',
-    #    'PASSWORD': 'PASSWORD_REDACTED'
-    #}'''
+    }
 }
 
 CACHES = {
@@ -98,7 +82,7 @@ CACHES = {
 
 
 XQUEUE_INTERFACE = {
-    "url": "https://example.com",
+    "url": "https://sandbox-xqueue.edx.org",
     "django_auth": {
         "username": "lms",
         "password": "***REMOVED***"
@@ -192,11 +176,12 @@ LMS_MIGRATION_ALLOWED_IPS = ['127.0.0.1']
 
 ################################ OpenID Auth #################################
 
-MITX_FEATURES['AUTH_USE_OPENID'] = False
-MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = False
+MITX_FEATURES['AUTH_USE_OPENID'] = True
+MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = True
 MITX_FEATURES['BYPASS_ACTIVATION_EMAIL_FOR_EXTAUTH'] = True
 
 INSTALLED_APPS += ('external_auth',)
+INSTALLED_APPS += ('django_openid_auth',)
 
 OPENID_CREATE_USERS = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True
@@ -271,7 +256,7 @@ ANALYTICS_API_KEY = ""
 
 ##### segment-io  ######
 
-# If there's an environment variable set, grab it and turn on segment io
+# If there's an environment variable set, grab it and turn on Segment.io
 SEGMENT_IO_LMS_KEY = os.environ.get('SEGMENT_IO_LMS_KEY')
 if SEGMENT_IO_LMS_KEY:
     MITX_FEATURES['SEGMENT_IO_LMS'] = True
@@ -297,17 +282,3 @@ try:
     from .private import *      # pylint: disable=F0401
 except ImportError:
     pass
-
-
-######################WIND############
-INSTALLED_APPS += ('wind', 'cvn')
-WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
-WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")
-WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")
-WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")
-CMS_URL = ENV_TOKENS.get("CMS_URL")
-LTI_LAUNCH_URL = ENV_TOKENS.get("LTI_LAUNCH_URL")
-LTI_CONSUMER_KEY = ENV_TOKENS.get("LTI_CONSUMER_KEY")
-LTI_CONSUMER_SECRET = ENV_TOKENS.get("LTI_CONSUMER_SECRET")
-WIKI_ENABLED = False
-CVN_SC_URL = ENV_TOKENS.get("CVN_SC_URL")

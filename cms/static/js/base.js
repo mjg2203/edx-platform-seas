@@ -421,11 +421,6 @@ function _deleteItem($el, type) {
     confirm.show();
 }
 
-function markAsLoaded() {
-    $('.upload-modal .copy-button').css('display', 'inline-block');
-    $('.upload-modal .progress-bar').addClass('loaded');
-}
-
 function hideModal(e) {
     if (e) {
         e.preventDefault();
@@ -434,7 +429,6 @@ function hideModal(e) {
     // of the editor. Users must press Cancel or Save to exit the editor.
     // module_edit adds and removes the "is-fixed" class.
     if (!$modalCover.hasClass("is-fixed")) {
-        $('.file-input').unbind('change', startUpload);
         $modal.hide();
         $modalCover.hide();
     }
@@ -626,25 +620,25 @@ function addNewCourse(e) {
             return gettext('Please do not use any spaces or special characters in this field.');
         }
         return '';
-    }
+    };
 
-    // Ensure that all items are less than 80 characters.
+    // Ensure that org/course_num/run < 65 chars.
     var validateTotalCourseItemsLength = function() {
         var totalLength = _.reduce(
-            ['.new-course-name', '.new-course-org', '.new-course-number', '.new-course-run'],
+            ['.new-course-org', '.new-course-number', '.new-course-run'],
             function(sum, ele) {
                 return sum + $(ele).val().length;
         }, 0
         );
-        if(totalLength > 80) {
+        if(totalLength > 65) {
             $('.wrap-error').addClass('is-shown');
-            $('#course_creation_error').html('<p>' + gettext('Course fields must have a combined length of no more than 80 characters.') + '</p>');
+            $('#course_creation_error').html('<p>' + gettext('The combined length of the organization, course number, and course run fields cannot be more than 65 characters.') + '</p>');
             $('.new-course-save').addClass('is-disabled');
         }
         else {
             $('.wrap-error').removeClass('is-shown');
         }
-    }
+    };
 
     // Handle validation asynchronously
     _.each(

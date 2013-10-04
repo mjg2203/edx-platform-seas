@@ -16,14 +16,17 @@ LOGGING = get_logger_config(ENV_ROOT / "log",
                             dev_env=True,
                             debug=True)
 
-modulestore_options = {
-    'default_class': 'xmodule.raw_module.RawDescriptor',
+DOC_STORE_CONFIG = {
     'host': 'localhost',
     'db': 'xmodule',
     'collection': 'modulestore',
+}
+
+modulestore_options = dict({
+    'default_class': 'xmodule.raw_module.RawDescriptor',
     'fs_root': GITHUB_REPO_ROOT,
     'render_template': 'mitxmako.shortcuts.render_to_string',
-}
+}, **DOC_STORE_CONFIG)
 
 MODULESTORE = {
     'default': {
@@ -185,16 +188,6 @@ if SEGMENT_IO_KEY:
 #####################################################################
 # Lastly, see if the developer has any local overrides.
 try:
-    from .private import *      # pylint: disable=F0401
+    from .private import *  # pylint: disable=F0401
 except ImportError:
     pass
-    
-######################CVN############
-INSTALLED_APPS += ('wind','cvncms')
-import json
-with open(ENV_ROOT / "env.json") as env_file:
-    ENV_TOKENS = json.load(env_file)
-LMS_URL = ENV_TOKENS.get("LMS_URL")
-LTI_LAUNCH_URL = ENV_TOKENS.get("LTI_LAUNCH_URL")
-LTI_CONSUMER_KEY = ENV_TOKENS.get("LTI_CONSUMER_KEY")
-LTI_CONSUMER_SECRET = ENV_TOKENS.get("LTI_CONSUMER_SECRET")

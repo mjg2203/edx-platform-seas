@@ -1,10 +1,10 @@
 // studio - views - course import
 // ====================
 
-body.course.import {
+.view-import {
 
   .import-overview {
-    @extend .ui-window;
+    @extend %ui-window;
     @include clearfix;
     padding: 30px 40px;
   }
