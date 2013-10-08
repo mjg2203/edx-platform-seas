@@ -24,7 +24,7 @@ def url_class(is_active):
         % else:
           <li>
         % endif
-             <a href="${tab.link | h}" target="${'_blank' if (tab.name=='Discussion') else '_self'}" class="${url_class(tab.is_active)}">
+            <a href="${tab.link | h}" class="${url_class(tab.is_active)}">
                  ${tab.name | h}
                  % if tab.is_active == True:
                    <span class="sr">, current location</span>
