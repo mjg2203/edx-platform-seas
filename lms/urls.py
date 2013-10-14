@@ -16,14 +16,16 @@ urlpatterns = ('',  # nopep8
 
     url(r'^update_certificate$', 'certificates.views.update_certificate'),
     url(r'^$', 'branding.views.index', name="root"),   # Main marketing page, or redirect to courseware
-    url(r'^dashboard$', 'student.views.dashboard', name="dashboard"),
+    url(r'^dashboard$', 'cvn_student.views.cvn_lms_dashboard', name="dashboard"),
     
     # url(r'^login$', 'student.views.signin_user', name="signin_user"),
     url(r'^login/$', 'wind.views.login', name="signin_user"),
     #url(r'^oldlogin/', 'wind.views.oldlogin', name="old_signin_user"),
     
     #url(r'^piazzatest/', 'wind.views.piazza_test', name="piazza_test"),
-    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'wind.views.piazza_test', name="piazza_discussion"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
+    url(r'^courses/piazza_redirect/', 'cvn_student.views.piazza_redirect', name="piazza_redirect"),
+    
     #url(r'^courses/(?P<org>[^/]+)/(?P<course>[^/]+)(?P<name>[^/]+)/discussion', 'wind.views.piazza_test', name="piazza_test"), 
 
     #url(r'^register$', 'student.views.register_user', name="register_user"),
@@ -33,7 +35,7 @@ urlpatterns = ('',  # nopep8
     
     url(r'^password_reset/$', 'student.views.dashboard', name='password_reset'),
     url(r'^change_email$', 'student.views.dashboard', name="change_email"),
-    url(r'^change_proctorinfo$', 'wind.views.change_proctorinfo_request', name="change_proctorinfo"),
+    url(r'^change_proctorinfo$', 'cvn_student.views.change_proctorinfo_request', name="change_proctorinfo"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
