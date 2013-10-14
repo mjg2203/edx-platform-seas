@@ -1,4 +1,6 @@
 <%! from django.utils.translation import ugettext as _ %>
+<%! import urllib %>
+<%! from django.core.urlresolvers import reverse %>
 <%inherit file="/main.html" />
 <%block name="bodyclass">${course.css_class}</%block>
 <%namespace name='static' file='/static_content.html'/>
@@ -29,23 +31,9 @@ $(document).ready(function(){
     
     <section class="updates">
       <h1>${_("Discussion")}</h1>
-      <iframe width="980" height="600" id="frame"></iframe>
-    <script language="javascript">
-      //<![CDATA[
-      $(function() {
-      var html = '<form id="ltiLaunchFormSubmitArea" style="display:block" action="${launch_url}" name="ltiLaunchForm" id="ltiLaunchForm" method="post" encType="application/x-www-form-urlencoded">'
-    % for key in launch_data:
-        + '<input type="hidden" name="${key}" value="${str(launch_data[key])}"/>'
-    % endfor
-        + '<input type="submit" value="Go to Piazza"></input>'
-        + '</form>'
-        + '<sc'+'ript language="javascript">document.ltiLaunchForm.submit();</sc'+'ript>';
-      console.log(html);
-      document.getElementById('frame').src = 'data:text/html;charset=utf-8,'
-                    + encodeURI(html);
-      });
-      //]]>
-    </script>
+      <iframe width="980" height="600" id="frame" src="${reverse("piazza_redirect")}?${urllib.urlencode(launch_data)}" ></iframe>
+      
+      
     </section>
     % else:
     <section class="updates">

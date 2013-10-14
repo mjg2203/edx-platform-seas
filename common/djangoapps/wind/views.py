@@ -13,13 +13,7 @@ from student.views import _do_create_account
 from student.views import activate_account
 from mitxmako.shortcuts import render_to_response
 
-from courseware.access import has_access
-from courseware.courses import (get_courses, get_course_with_access,
-                                get_courses_by_university, sort_by_announcement)
-from courseware.masquerade import setup_masquerade
 
-from student.models import UserProfile
-from student.models import CourseEnrollment
 
 from django.contrib.auth.models import User
 
@@ -115,100 +109,6 @@ def fakewind(request):
 
 def register(request):
     return redirect("http://cvn.columbia.edu/");
-
-LTI_LAUNCH_URL = settings.LTI_LAUNCH_URL
-LTI_CONSUMER_KEY = settings.LTI_CONSUMER_KEY
-LTI_CONSUMER_SECRET = settings.LTI_CONSUMER_SECRET
-
-@login_required
-@ensure_csrf_cookie
-def piazza_test(request, course_id):
-    '''
-    This view outputs a self-sending html form that sends a POST message to Piazza.
-      From the user's perspective, this view redirects them and signs them into Piazza
-    '''
-    # Create a new tool configuration
-    config = ToolConfig(title = 'Piazza',
-            launch_url = LTI_LAUNCH_URL)
-
-    # Create tool consumer using LTI!
-    consumer = ToolConsumer(LTI_CONSUMER_KEY,
-            LTI_CONSUMER_SECRET)
-    consumer.set_config(config)
-
-    
-    #retrieve user and course models
-    user = User.objects.prefetch_related("groups").get(id=request.user.id)
-    userProfile = UserProfile.objects.get(user_id=user.id)
-    course = course_from_id(course_id)
-
-    #check for permissions to determine what role to pass to Piazza.com through 
-    piazza_role = ''
-    if user.groups.filter(name=('instructor_'+course_id)).count() != 0 or request.user.is_staff:
-        piazza_role = 'Instructor'
-    elif user.groups.filter(name=('staff_'+course_id)).count() != 0:
-        piazza_role = 'Staff'
-    else:
-        piazza_role = 'Learner'
-
-    # Set some launch data from: http://www.imsglobal.org/LTI/v1p1pd/ltiIMGv1p1pd.html#_Toc309649684
-    consumer.resource_link_id = course_id
-    consumer.lis_person_contact_email_primary = user.email
-    consumer.lis_person_name_full = str(userProfile.name)
-    hash = hashlib.md5()
-    hash.update(str(userProfile.user_id))
-    consumer.user_id = hash.hexdigest()
-    #TODO: check if user is is_staff, student, professor, or staff and set the role appropriately
-    #consumer.roles = 'Learner'
-    consumer.roles = piazza_role
-    consumer.context_id = course_id
-    consumer.context_title = course.display_name_with_default
-    consumer.context_label = course.number.replace('_', ' ')
-    consumer.tool_consumer_instance_guid = 'lms.cvn.columbia.edu'
-    consumer.tool_consumer_instance_description = 'Columbia University'
- 
-
-    launch_data = consumer.generate_launch_data()
-    launch_url = consumer.launch_url
-
-
-    course = get_course_with_access(request.user, course_id, 'load')
-    staff_access = has_access(request.user, course, 'staff')
-    masq = setup_masquerade(request, staff_access)    # allow staff to toggle masquerade on info page
-
-    return render_to_response('courseware/piazza_discussion.html', {'request': request, 'course_id': course_id, 'cache': None,
-            'course': course, 'staff_access': staff_access, 'masquerade': masq, 'launch_url':launch_url, 'launch_data':launch_data})
-    
-'''
-    #render a self-submitting form that sends all data to Piazza.com via the LTI standard
-    returnable = '<iframe width="100%" height="100%" id="frame"></iframe>'
-    returnable += '<script language="javascript">var html = \''
-    returnable += '<form id="ltiLaunchFormSubmitArea" style="display:block" action="' + launch_url + '" name="ltiLaunchForm" id="ltiLaunchForm" method="post" encType="application/x-www-form-urlencoded">'
-    for key in launch_data:
-        returnable += '<input type="hidden" name="'+ key +'" value="'+ str(launch_data[key]) + '"/>'
-    returnable += '<input type="submit" value="Go to Piazza"></input>'
-    returnable += '</form>\';'
-    #returnable += '<script language="javascript">document.ltiLaunchForm.submit();</script>\'\n'
-    returnable += "document.getElementById('frame').src = 'data:text/html;charset=utf-8,' + encodeURI(html);\n"
-    returnable += "</script>\n"
-    #returnable += '<script language="javascript">document.getElementById("ltiLaunchFormSubmitArea").style.display = "none";document.ltiLaunchForm.submit();</script>'
-    return HttpResponse(returnable)
-    result = requests.post(launch_url, params=launch_data)
-    return HttpResponse(result.text)
-'''
-
-def course_dashboard(request, org, course, name):
-    #TODO: display course roster for a class
-    #CourseEnrollment.get(user=request.user.id)
-    #user = User.objects.get(id=request.user.id)
-    #userProfile = UserProfile.objects.get(user_id=user.id)
-    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
-    returnable = ''
-    for courseEnrollment in courseEnrollments:
-        #user = User.objects.get(...
-        returnable += str(courseEnrollment.user.username)+'<br />'
-    return HttpResponse(returnable)
-    return HttpResponse("Welcome to the professor dashboard!")
 
 @login_required
 @ensure_csrf_cookie
