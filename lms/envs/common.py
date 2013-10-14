@@ -935,6 +935,10 @@ def enable_theme(theme_name):
     STATICFILES_DIRS.append((u'themes/%s' % theme_name,
                              theme_root / 'static'))
 
+############################### WIND and CVN ################################
+AUTHENTICATION_BACKENDS = ('wind.backends.OldCVNBackend', 'wind.backends.WindBackend', ) + AUTHENTICATION_BACKENDS
+INSTALLED_APPS += ('django_countries', 'cvn_student',)
+
 ################# Student Verification #################
 VERIFY_STUDENT = {
     "DAYS_GOOD_FOR" : 365, # How many days is a verficiation good for?
