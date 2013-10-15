@@ -55,3 +55,9 @@ MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = False
 MITX_FEATURES['ENABLE_SQL_TRACKING_LOGS'] = True
 
 LOGIN_URL = '/login'
+
+CVN_ANALYTICS_URL = "http://snipe.cvn.columbia.edu:9999/view/video_list"
+CVN_ANALYTICS_USERS = (
+    'mjg2203',
+    'ljc2147',
+)

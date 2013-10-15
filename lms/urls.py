@@ -482,6 +482,11 @@ if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
         url(r'^auto_auth$', 'student.views.auto_auth'),
     )
 
+# CVN-specific
+urlpatterns += (
+  url(r'^cvn/stats', 'cvn_stats.views.dashboard', name="cvn_stats_dashboard"),
+)
+
 urlpatterns = patterns(*urlpatterns)
 
 if settings.DEBUG:

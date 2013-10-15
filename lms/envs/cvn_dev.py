@@ -12,7 +12,7 @@ FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
 LOGIN_URL = '/login'
 
-INSTALLED_APPS += ('wind','cvn')
+INSTALLED_APPS += ('wind','cvn', 'cvn_stats')
 WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
 WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")
 WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")
@@ -43,3 +43,9 @@ XQUEUE_INTERFACE['url']= "https://example.com"
 
 MITX_FEATURES['AUTH_USE_OPENID'] = False
 MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = False
+
+CVN_ANALYTICS_URL = "http://snipe.cvn.columbia.edu:9999/view/video_list"
+CVN_ANALYTICS_USERS = (
+    'mjg2203',
+    'ljc2147',
+)
