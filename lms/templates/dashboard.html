@@ -97,10 +97,66 @@
        return false;
     });
     */
+    /*
+    $("#change_proctorinfo_form").submit(function(){
+
+      $.get("${reverse('change_proctorinfo')}",
+             this.formSerialize(),
+             function(data) {
+               if(data.success) {
+                 ("success!");
+                 $("#change_proctorinfo_body").html("<p>Proctor info changed.</p>");
+               } else {
+                ("error!");
+                 $("#change_proctorinfo_error").html(data.error).stop().css("display", "block");
+               }
+             });
+       return false;
+    });
+  */
+
+    $("#change_proctorinfo_form").submit(function(){
+      $.ajax({
+        type: "GET",
+        url: "${reverse('change_proctorinfo')}",
+        data: $(this).serializeArray(),
+        success: function(data) {
+          if(data.success) {
+            //alert("Yeah!");
+            //$("#change_proctorinfo_body").html("<p>Proctor info changed.</p>");
+            $("#change_proctorinfo_error").css("display", "none");
+            $("#change_proctorinfo_success").text("You have successfully updated your proctor information.").stop().css("display", "block");
+          } else {
+            $("#change_proctorinfo_success").css("display", "none");
+            $(".change_proctorinfo_error").css("display", "none");
+            var printable = "Please correct the following form errors and submit this form again:<ul>";
+            /*
+            for(var formElement in form) {
+              try{
+                $("#proctor_"+formElement+"_error").css("display", "none");
+              }
+            }
+            */
+            for(var field in data.errors) {
+              printable += "<li>"+field+":"+data.errors[field][0]+"</li>";
+              //$("#proctor_"+field+"_error").text(data.errors[field][0]).stop().css("display", "block");
+            }
+            printable += "</ul>";
+            $("#change_proctorinfo_error").html(printable).stop().css("display", "block");
+          }
+        },
+        error: function(xhr, textStatus, error) {
+          //alert(error);
+          $("#change_proctorinfo_error").html("There's been an error updating your proctor's information. Please reload the page and try again.").stop().css("display", "block");
+        }
+      });
+      return false;
+    });
+    /*
     $('#change_proctorinfo_form').ajaxForm({
-        url:"${reverse('change_proctorinfo')}",
-    	success:function() { 
-            alert("Thank you for your comment!"); 
+      url:"${reverse('change_proctorinfo')}",
+    	success:function() {
+            alert("${reverse('change_proctorinfo')} Your proctor's information has been successfully updated!"); 
     	},
     	error:function(error) {
     		//$("#change_proctorinfo_error").html(JSON.stringify(error))
@@ -109,6 +165,7 @@
     		alert("There was an error!"+JSON.stringify(error));
     	}
     })
+    */
     	
     /* 
     $("#change_proctorinfo_form").validate({
@@ -197,7 +254,6 @@
             % endif
           </span> <span class="data">${ user.email | h }</span>
         </li>
-      <%doc>
         <li>
           <span class="title"><div class="icon name-icon"></div>${_("Proctor")}
             % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
@@ -205,7 +261,6 @@
             % endif
           </span> <span class="data">${ user.email | h }</span>
         </li>
-        </%doc>
 
         % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
         <!--li>
@@ -458,24 +513,103 @@
       <hr/>
     </header>
     <div id="change_proctorinfo_body">
-      <form id="change_proctorinfo_form" action="${reverse('change_email')}" method="POST">
-        <div id="change_proctorinfo_error" class="modal-form-error"> </div>
+      <form id="change_proctorinfo_form" action="javascript:return false;" method="GET">
+        
+        
         <fieldset>
+
+
 
           
 <div class="input-group">
 <p>         
-<span class="required">* required field</span>
+  <span class="required">* required field</span>
 </p>
 </div>
 <div class="input-group">
-<h2>Proctor Information</h2>
-<div style="height: 10px; overflow: hidden;"></div>
-</td>
-</tr>
+  <h2>Proctor Information</h2>
+  <div style="height: 10px; overflow: hidden;"></div>
 
+<p>
 <label><span class="required">*</span>${_('First name:')}</label>
-<input type="text" name="first" size=28 maxlength=31 value="" required/>
+<div class="change_proctorinfo_error" id="proctor_first_name_error"></div>
+${ form['first_name'] }
+</p>
+
+<p>
+<label><span class="required">*</span>${_('Last name:')}</label>
+<div class="change_proctorinfo_error" id="proctor_last_name_error"></div>
+${ form['last_name'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Title:')}</label>
+<div class="change_proctorinfo_error" id="proctor_title_error"></div>
+${ form['title'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Relationship to Student:')}</label>
+<div class="change_proctorinfo_error" id="proctor_relationship_to_student_error"></div>
+${ form['relationship_to_student'] }
+</p>
+<p>
+<b><u><font color=red>ATTENTION:</font></u><font size=-1> Please enter valid company email addresses only!</b></font><br>
+<font size=-1><u>Good Example</u>: joe@us.ibm.com , joe@motorola.com</font> <br>
+<font size=-1><u>Bad Example</u>: joe@yahoo.com , joe@hotmail.com</font>  <br>
+</p>
+<p>
+<label><span class="required">*</span>${_('Email:')}</label>
+<div class="change_proctorinfo_error" id="proctor_email_error"></div>
+${ form['email'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Phone number:')}</label>
+<div class="change_proctorinfo_error" id="proctor_phone_error"></div>
+${ form['phone'] }
+</p>
+<p>
+<label>${_('Fax number:')}</label>
+<div class="change_proctorinfo_error" id="proctor_fax_error"></div>
+${ form['fax'] }
+</p>
+</div>
+
+<div class="input-group">
+<h2>Exam Location</h2>
+<div style="height: 10px; overflow: hidden;"></div>
+
+<p>
+<label><span class="required">*</span>${_('Street Address 1:')}</label>
+<div class="change_proctorinfo_error" id="proctor_street_address_1_error"></div>
+${ form['street_address_1'] }
+</p>
+<p>
+<label>${_('Street Address 2:')}</label>
+<div class="change_proctorinfo_error" id="proctor_street_address_2_error"></div>
+${ form['street_address_2'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('City:')}</label>
+<div class="change_proctorinfo_error" id="proctor_city_error"></div>
+${ form['city'] }
+</p>
+<p>
+<label>${_('State:')}</label>
+<div class="change_proctorinfo_error" id="proctor_state_error"></div>
+${ form['state'] }
+</p>
+<p>
+<label>${_('ZIP code:')}</label>
+<div class="change_proctorinfo_error" id="proctor_zip_code_error"></div>
+${ form['zip_code'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Country:')}</label>
+<div class="change_proctorinfo_error" id="proctor_country_error"></div>
+${ form['country'] }
+</p>
+
+
+<!--input type="text" name="first" size=28 maxlength=31 value="" required/ >
 
 <label><span class="required">*</span>${_('Last name:')}</label>
 <input type="text" name="last" size=28 maxlength=31 value="" required/>
@@ -801,8 +935,10 @@ with you to the exam.
 <a href="academicintegrity.php" target="_blank"> Academic Integrity and Exam Proctoring Guidelines </a>
 </p>
 </section>
+<div id="change_proctorinfo_error" class="modal-form-error"> </div>
+<div id="change_proctorinfo_success" class="modal-form-success" style="background:#8FC75C; border: 1px solid #329014; color: #0A751F; padding:10px; display:none;"> </div>
 <div class="submit">
-    <input type="submit" id="submit_proctorinfo_change" value="${_('Save Proctor Info')}"/>
+    <input type="submit" id="plz_submit_proctorinfo_change" value="${_('Save Proctor Info')}"/>
 </div>
           
           
