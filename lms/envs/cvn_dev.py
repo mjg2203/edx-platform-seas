@@ -44,7 +44,12 @@ XQUEUE_INTERFACE['url']= "https://example.com"
 MITX_FEATURES['AUTH_USE_OPENID'] = False
 MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = False
 
-CVN_ANALYTICS_URL = "http://snipe.cvn.columbia.edu:9999/view/video_list"
+# must have trailing slash:    !!!                     v
+CVN_ANALYTICS_URL = "http://snipe.cvn.columbia.edu:9999/"
+
+# don't change this
+CVN_ANALYTICS_PATH = "view/video_list"
+
 CVN_ANALYTICS_USERS = (
     'mjg2203',
     'ljc2147',

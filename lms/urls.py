@@ -484,6 +484,7 @@ if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
 
 # CVN-specific
 urlpatterns += (
+  url(r'^cvn/stats_inner', 'cvn_stats.views.dashboard_inner', name="cvn_stats_dashboard_inner"),
   url(r'^cvn/stats', 'cvn_stats.views.dashboard', name="cvn_stats_dashboard"),
 )
 
