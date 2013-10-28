@@ -81,7 +81,6 @@ header.global {
         border: 1px solid $border-color-2;
         border-radius: 3px;
         @include box-sizing(border-box);
-        box-shadow: 0 1px 0 0 rgba(255,255,255, 0.6);
         color: $base-font-color;
         display: inline-block;
         font-family: $sans-serif;
