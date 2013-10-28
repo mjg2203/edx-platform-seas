@@ -18,17 +18,11 @@ urlpatterns = ('',  # nopep8
     url(r'^$', 'branding.views.index', name="root"),   # Main marketing page, or redirect to courseware
     url(r'^dashboard$', 'cvn_student.views.cvn_lms_dashboard', name="dashboard"),
     
-    # url(r'^login$', 'student.views.signin_user', name="signin_user"),
     url(r'^login/$', 'wind.views.login', name="signin_user"),
-    #url(r'^oldlogin/', 'wind.views.oldlogin', name="old_signin_user"),
     
-    #url(r'^piazzatest/', 'wind.views.piazza_test', name="piazza_test"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
     url(r'^courses/piazza_redirect/', 'cvn_student.views.piazza_redirect', name="piazza_redirect"),
     
-    #url(r'^courses/(?P<org>[^/]+)/(?P<course>[^/]+)(?P<name>[^/]+)/discussion', 'wind.views.piazza_test', name="piazza_test"), 
-
-    #url(r'^register$', 'student.views.register_user', name="register_user"),
     url(r'^register$', 'wind.views.register', name="register_user"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$',
             'cvn.views.proctor', name="proctor"),
@@ -39,7 +33,6 @@ urlpatterns = ('',  # nopep8
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
-    #url(r'^change_email$', 'student.views.change_email_request', name="change_email"),
     url(r'^email_confirm/(?P<key>[^/]*)$', 'student.views.confirm_email_change'),
     url(r'^change_name$', 'student.views.change_name_request', name="change_name"),
     url(r'^accept_name_change$', 'student.views.accept_name_change'),
@@ -48,13 +41,6 @@ urlpatterns = ('',  # nopep8
     url(r'^event$', 'track.views.user_track'),
     url(r'^t/(?P<template>[^/]*)$', 'static_template_view.views.index'),   # TODO: Is this used anymore? What is STATIC_GRAB?
 
-
-    #url(r'^accounts/login$', 'student.views.accounts_login', name="accounts_login"),
-    #url(r'^accounts/login$', 'wind.views.login', name="accounts_login"),
-    
-
-    #url(r'^login_ajax$', 'student.views.login_user', name="login"),
-    #url(r'^login_ajax/(?P<error>[^/]*)$', 'student.views.login_user'),
     url(r'^logout$', 'student.views.logout_user', name='logout'),
     url(r'^create_account$', 'student.views.create_account', name='create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name="activate"),
@@ -62,7 +48,6 @@ urlpatterns = ('',  # nopep8
     url(r'^begin_exam_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)$', 'student.views.begin_exam_registration', name="begin_exam_registration"),
     url(r'^create_exam_registration$', 'student.views.create_exam_registration'),
 
-    #url(r'^password_reset/$', 'student.views.password_reset', name='password_reset'),
     ## Obsolete Django views for password resets
     ## TODO: Replace with Mako-ized views
     url(r'^password_change/$', django.contrib.auth.views.password_change,

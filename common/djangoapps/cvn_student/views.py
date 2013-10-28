@@ -40,13 +40,6 @@ def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
     if 'ticketid' in request.GET:
-        '''
-        post_data = [('ticketid',request.GET.get('ticketid', '')),]     # a sequence of two element tuples
-        result = urllib2.urlopen('http://400pixels.net/fakewind/fake_wind_validation.php?'+urllib.urlencode(post_data))
-        content = result.read()
-        return HttpResponse('Validation Successful!<br />Contents of ticket validation response:<br />'+content if 'yes' in content else 'Validation Failed!<br />Contents of ticket validation response:<br />'+content);
-        #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
-        '''
         user = authenticate(request=request, token=request.GET.get('ticketid', ''))
 
         # FIXME: 
@@ -98,12 +91,8 @@ def login(request):
         No post or get requests, so redirect user to Columbia WIND login
         '''
         return redirect(settings.WIND_LOGIN_URL + "?destination=" + settings.WIND_DESTINATION)
-        '''template = loader.get_template('wind/index.html')
-        context = RequestContext(request, {})
-        return HttpResponse(template.render(context))'''
 
 
-    
 def fakewind(request):
     return HttpResponse("Hello, world. You're at fake WIND.")
 
@@ -176,10 +165,14 @@ def cvn_lms_dashboard(request):
     # Global staff can see what courses errored on their dashboard
     staff_access = False
     errored_courses = {}
-    if has_access(user, 'global', 'staff'):
-        # Show any courses that errored on load
-        staff_access = True
-        errored_courses = modulestore().get_errored_courses()
+
+    # FIXME: in the copy-paste where this page of code came from, the following
+    # lines were not taken into consideration, so they cause this page to break
+    # for admin users:
+    ## if has_access(user, 'global', 'staff'):
+    ##     # Show any courses that errored on load
+    ##     staff_access = True
+    ##     errored_courses = modulestore().get_errored_courses()
 
     show_courseware_links_for = frozenset(course.id for course, _enrollment in courses
                                           if has_access(request.user, course, 'load'))
@@ -222,11 +215,6 @@ def cvn_lms_dashboard(request):
 def change_proctorinfo_request(request):
     ''' AJAX call from the profile page. User wants to update his proctor's info.
     '''
-    #return HttpResponse(json.dumps({'success': False,
-    #                                    'error': _("Oh no!.")}))
-
-
-
     ## Make sure it checks for existing e-mail conflicts
     if not request.user.is_authenticated:
         return HttpResponse(json.dumps({'success': False,
@@ -295,8 +283,8 @@ def piazza_discussion(request, course_id):
     hash = hashlib.md5()
     hash.update(str(userProfile.user_id))
     consumer.user_id = hash.hexdigest()
+
     #TODO: check if user is is_staff, student, professor, or staff and set the role appropriately
-    #consumer.roles = 'Learner'
     consumer.roles = piazza_role
     consumer.context_id = course_id
     consumer.context_title = course.display_name_with_default
@@ -328,13 +316,9 @@ def piazza_redirect(request):
 
 def course_dashboard(request, org, course, name):
     #TODO: display course roster for a class
-    #CourseEnrollment.get(user=request.user.id)
-    #user = User.objects.get(id=request.user.id)
-    #userProfile = UserProfile.objects.get(user_id=user.id)
     courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
     returnable = ''
     for courseEnrollment in courseEnrollments:
-        #user = User.objects.get(...
         returnable += str(courseEnrollment.user.username)+'<br />'
     return HttpResponse(returnable)
     return HttpResponse("Welcome to the professor dashboard!")
