@@ -1,13 +1,11 @@
 from django.http import HttpResponse
 from django.conf import settings
-from django.contrib.auth.models import User, check_password
+from django.contrib.auth.models import User
 from student.views import _do_create_account
-from django.conf import settings
-from student.views import activate_account
 import requests
 import random
 import string
-from django.db import connection, connections, transaction
+from django.db import connections
 import time
 
 class WindBackend(object):

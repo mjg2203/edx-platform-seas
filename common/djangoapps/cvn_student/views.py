@@ -1,49 +1,33 @@
-# Create your views here.
-from django.http import HttpResponse
-from django.template import RequestContext, loader
-from django.contrib.auth.decorators import login_required
-from django_future.csrf import ensure_csrf_cookie
-import urllib
-import urllib2
-import requests
-from django.shortcuts import redirect
-from django.core.urlresolvers import reverse
-from student.views import login_user
-from student.views import _do_create_account
-from student.views import activate_account
-from mitxmako.shortcuts import render_to_response
-
-from student.models import UserProfile
-from student.models import CourseEnrollment
-
-from django.contrib.auth.models import User
-
+from bulk_email.models import Optout
+from courseware.access import has_access
+from courseware.masquerade import setup_masquerade
+from cvn_student.forms import ProctorForm
+from cvn_student.models import Proctor
 from django.conf import settings
-
+from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django_future.csrf import ensure_csrf_cookie
+from external_auth.models import ExternalAuthMap
+from ims_lti_py import ToolConsumer, ToolConfig
+from mitxmako.shortcuts import render_to_response
+from student.models import CourseEnrollment
+from student.models import UserProfile
+from student.views import cert_info
+from student.views import course_from_id
+from student.views import exam_registration_info
+import django.contrib.auth
+import hashlib
+import json
 import re
 
-from ims_lti_py import ToolConsumer, ToolConfig,\
-        OutcomeRequest, OutcomeResponse
-import hashlib
-from student.views import course_from_id
-
-from django.db import connection, connections, transaction
-
-import time
-
-from django.contrib.auth import authenticate
-import django.contrib.auth
-
-import json
-from django.utils.translation import ugettext as _
-
-from courseware.access import has_access
+# TODO: check on this import
 from courseware.courses import (get_courses, get_course_with_access,
                                 get_courses_by_university, sort_by_announcement)
-from courseware.masquerade import setup_masquerade
 
-from student.models import UserProfile
-from student.models import CourseEnrollment
 
 def login(request):
     '''
@@ -166,13 +150,6 @@ def course_dashboard(request, org, course, name):
     return render_to_response('dashboard_index.html', {'courseEnrollments':courseEnrollments})
 
 
-from bulk_email.models import Optout
-from courseware.access import has_access
-from student.views import cert_info
-from student.views import exam_registration_info
-from external_auth.models import ExternalAuthMap
-from cvn_student.forms import ProctorForm
-from cvn_student.models import Proctor
 
 @login_required
 @ensure_csrf_cookie
