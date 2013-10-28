@@ -4,8 +4,11 @@ from ratelimitbackend import admin
 from django.conf.urls.static import static
 import wind.views
 
-import django.contrib.auth.views
+# CVN-specific changes:
+## we comment out some routes we're not using
+## then at the end of this file we add in our new routes
 
+import django.contrib.auth.views
 
 # Uncomment the next two lines to enable the admin:
 if settings.DEBUG or settings.MITX_FEATURES.get('ENABLE_DJANGO_ADMIN_SITE'):
@@ -16,23 +19,17 @@ urlpatterns = ('',  # nopep8
 
     url(r'^update_certificate$', 'certificates.views.update_certificate'),
     url(r'^$', 'branding.views.index', name="root"),   # Main marketing page, or redirect to courseware
-    url(r'^dashboard$', 'cvn_student.views.cvn_lms_dashboard', name="dashboard"),
-    
-    url(r'^login/$', 'wind.views.login', name="signin_user"),
-    
-    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
-    url(r'^courses/piazza_redirect/', 'cvn_student.views.piazza_redirect', name="piazza_redirect"),
-    
-    url(r'^register$', 'wind.views.register', name="register_user"),
-    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$',
-            'cvn.views.proctor', name="proctor"),
-    
-    url(r'^password_reset/$', 'student.views.dashboard', name='password_reset'),
-    url(r'^change_email$', 'student.views.dashboard', name="change_email"),
-    url(r'^change_proctorinfo$', 'cvn_student.views.change_proctorinfo_request', name="change_proctorinfo"),
+    # cvn: disable the main dashboard
+    ## url(r'^dashboard$', 'student.views.dashboard', name="dashboard"),
+
+    # disable standard login and register
+    ## url(r'^login$', 'student.views.signin_user', name="signin_user"),
+    ## url(r'^register$', 'student.views.register_user', name="register_user"),
 
     url(r'^admin_dashboard$', 'dashboard.views.dashboard'),
 
+    # cvn: we disable this, students will not be changing email through this system
+    ## url(r'^change_email$', 'student.views.change_email_request', name="change_email"),
     url(r'^email_confirm/(?P<key>[^/]*)$', 'student.views.confirm_email_change'),
     url(r'^change_name$', 'student.views.change_name_request', name="change_name"),
     url(r'^accept_name_change$', 'student.views.accept_name_change'),
@@ -41,12 +38,19 @@ urlpatterns = ('',  # nopep8
     url(r'^event$', 'track.views.user_track'),
     url(r'^t/(?P<template>[^/]*)$', 'static_template_view.views.index'),   # TODO: Is this used anymore? What is STATIC_GRAB?
 
+    # cvn: disable these, we use our own WIND login
+    ## url(r'^accounts/login$', 'student.views.accounts_login', name="accounts_login"),
+    ## url(r'^login_ajax$', 'student.views.login_user', name="login"),
+    ## url(r'^login_ajax/(?P<error>[^/]*)$', 'student.views.login_user'),
     url(r'^logout$', 'student.views.logout_user', name='logout'),
     url(r'^create_account$', 'student.views.create_account', name='create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name="activate"),
 
     url(r'^begin_exam_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)$', 'student.views.begin_exam_registration', name="begin_exam_registration"),
     url(r'^create_exam_registration$', 'student.views.create_exam_registration'),
+
+    # cvn: we're not using passwords
+    ## url(r'^password_reset/$', 'student.views.password_reset', name='password_reset'),
 
     ## Obsolete Django views for password resets
     ## TODO: Replace with Mako-ized views
@@ -93,7 +97,7 @@ urlpatterns += (
 )
 
 # Semi-static views only used by edX, not by themes
-if False:
+if not settings.MITX_FEATURES["USE_CUSTOM_THEME"]:
     urlpatterns += (
         url(r'^jobs$', 'static_template_view.views.render',
             {'template': 'jobs.html'}, name="jobs"),
@@ -469,8 +473,15 @@ if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
 
 # CVN-specific
 urlpatterns += (
-  url(r'^cvn/stats_inner', 'cvn_stats.views.dashboard_inner', name="cvn_stats_dashboard_inner"),
-  url(r'^cvn/stats', 'cvn_stats.views.dashboard', name="cvn_stats_dashboard"),
+    url(r'^change_proctorinfo$', 'cvn_student.views.change_proctorinfo_request', name="change_proctorinfo"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$', 'cvn.views.proctor', name="proctor"),
+    url(r'^courses/piazza_redirect/', 'cvn_student.views.piazza_redirect', name="piazza_redirect"),
+    url(r'^cvn/stats', 'cvn_stats.views.dashboard', name="cvn_stats_dashboard"),
+    url(r'^cvn/stats_inner', 'cvn_stats.views.dashboard_inner', name="cvn_stats_dashboard_inner"),
+    url(r'^dashboard$', 'cvn_student.views.cvn_lms_dashboard', name="dashboard"),
+    url(r'^login/$', 'wind.views.login', name="signin_user"),
+    url(r'^register$', 'wind.views.register', name="register_user"),
 )
 
 urlpatterns = patterns(*urlpatterns)
