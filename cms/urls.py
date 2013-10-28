@@ -26,18 +26,11 @@ urlpatterns = ('',  # nopep8
     url(r'^create_new_course', 'contentstore.views.create_new_course', name='create_new_course'),
     url(r'^reorder_static_tabs', 'contentstore.views.reorder_static_tabs', name='reorder_static_tabs'),
 
-    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'wind.views.piazza_test', name="piazza_discussion"),
-    #url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/dashboard/(?P<name>[^/]+)$',
-    #    'cvn.views.course_dashboard', name='course_dashboard'),
-    #url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/dashboard/(?P<name>[^/]+)$',
-    #    'contentstore.views.asset_index', name='asset_index'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$',
         'cvncms.views.course_dashboard', name='course_index'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/outline/(?P<name>[^/]+)$',
         'contentstore.views.course_index', name='course_lectures'),
     
-    #url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$',
-    #    'contentstore.views.course_index', name='course_index'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/import/(?P<name>[^/]+)$',
         'contentstore.views.import_course', name='import_course'),
 
