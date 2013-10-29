@@ -190,7 +190,7 @@ except ImportError:
     pass
     
 ######################CVN############
-INSTALLED_APPS += ('wind','cvncms')
+INSTALLED_APPS += ('wind','cvn_cms')
 import json
 with open(ENV_ROOT / "env.json") as env_file:
     ENV_TOKENS = json.load(env_file)
