@@ -3,8 +3,6 @@ from django.http import HttpResponse
 from django.template import RequestContext, loader
 from django.contrib.auth.decorators import login_required
 from django_future.csrf import ensure_csrf_cookie
-import urllib
-import urllib2
 import requests
 from django.shortcuts import redirect
 from django.core.urlresolvers import reverse
@@ -44,13 +42,6 @@ def login(request):
     if request.user.is_authenticated():
         return redirect(reverse('dashboard'))
     if 'ticketid' in request.GET:
-        '''
-        post_data = [('ticketid',request.GET.get('ticketid', '')),]     # a sequence of two element tuples
-        result = urllib2.urlopen('http://400pixels.net/fakewind/fake_wind_validation.php?'+urllib.urlencode(post_data))
-        content = result.read()
-        return HttpResponse('Validation Successful!<br />Contents of ticket validation response:<br />'+content if 'yes' in content else 'Validation Failed!<br />Contents of ticket validation response:<br />'+content);
-        #return HttpResponse("There's a GET message! ticketid is " +request.GET.get('ticketid', ""))
-        '''
         user = authenticate(request=request, token=request.GET.get('ticketid', ''))
 
         if user is not None:
