@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-from django.views.generic.simple import redirect_to
 
 # TODO: This should be removed once the CMS is running via wsgi on all production servers
 import cms.startup as startup
@@ -27,13 +26,9 @@ urlpatterns = ('',  # nopep8
     url(r'^reorder_static_tabs', 'contentstore.views.reorder_static_tabs', name='reorder_static_tabs'),
 
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$',
-        'cvncms.views.course_dashboard', name='course_index'),
-    url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/outline/(?P<name>[^/]+)$',
-        'contentstore.views.course_index', name='course_lectures'),
-    
+        'contentstore.views.course_index', name='course_index'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/import/(?P<name>[^/]+)$',
         'contentstore.views.import_course', name='import_course'),
-
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/export/(?P<name>[^/]+)$',
         'contentstore.views.export_course', name='export_course'),
     url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/generate_export/(?P<name>[^/]+)$',
@@ -117,7 +112,7 @@ urlpatterns += (
     url(r'^howitworks$', 'contentstore.views.howitworks', name='howitworks'),
     url(r'^signup$', 'contentstore.views.signup', name='signup'),
 
-    url(r'^create_account$', 'student.views.create_account', name='create_account'),
+    url(r'^create_account$', 'student.views.create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name='activate'),
 
     # form page
@@ -158,6 +153,11 @@ if settings.DEBUG:
         urlpatterns += dev_urlpatterns
     except ImportError:
         pass
+
+# CVN-specific
+urlpatterns += (
+    url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$', 'cvn_cms.views.course_dashboard', name='course_index'),
+)
 
 urlpatterns = patterns(*urlpatterns)
 
