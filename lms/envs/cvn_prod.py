@@ -5,7 +5,7 @@ from .aws import *
 # FORCE_SCRIPT_NAME = ENV_TOKENS.get("FORCE_SCRIPT_NAME")
 
 # Add our cvn- and columbia-specific apps:
-INSTALLED_APPS += ('wind','cvn')
+INSTALLED_APPS += ('wind','cvn_lms')
 
 # Configure columbia authentication. These vars say WIND, but could be used for
 # CAS as well

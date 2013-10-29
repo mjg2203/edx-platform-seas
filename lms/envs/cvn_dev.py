@@ -12,7 +12,7 @@ FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
 
 LOGIN_URL = '/login'
 
-INSTALLED_APPS += ('wind','cvn', 'cvn_stats')
+INSTALLED_APPS += ('wind','cvn_lms', 'cvn_stats')
 WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
 WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")
 WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")

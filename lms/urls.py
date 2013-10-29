@@ -475,7 +475,7 @@ if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
 urlpatterns += (
     url(r'^change_proctorinfo$', 'cvn_student.views.change_proctorinfo_request', name="change_proctorinfo"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
-    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$', 'cvn.views.proctor', name="proctor"),
+    url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$', 'cvn_lms.views.proctor', name="proctor"),
     url(r'^courses/piazza_redirect/', 'cvn_student.views.piazza_redirect', name="piazza_redirect"),
     url(r'^cvn/stats', 'cvn_stats.views.dashboard', name="cvn_stats_dashboard"),
     url(r'^cvn/stats_inner', 'cvn_stats.views.dashboard_inner', name="cvn_stats_dashboard_inner"),
