@@ -68,3 +68,11 @@ def proctor(request, course_id, student_id=None):
     context.update()
 
     return render_to_response('courseware/proctor.html', context)
+
+# a page explaining where to get the source, so we comply with the AGPL to the
+# maximum extent. Original code was just a link to edx.org, which is probably
+# not good enough.
+def open_source(request):
+    return render_to_response('cvn/open_source.html')
+
+    

@@ -473,6 +473,7 @@ if settings.MITX_FEATURES.get('AUTOMATIC_AUTH_FOR_TESTING'):
 
 # CVN-specific
 urlpatterns += (
+    url(r'^code$', 'cvn_lms.views.open_source', name="open_source"),
     url(r'^change_proctorinfo$', 'cvn_student.views.change_proctorinfo_request', name="change_proctorinfo"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/discussion/', 'cvn_student.views.piazza_discussion', name="piazza_discussion"),
     url(r'^courses/(?P<course_id>[^/]+/[^/]+/[^/]+)/proctor$', 'cvn_lms.views.proctor', name="proctor"),
