@@ -4,12 +4,9 @@ from courseware.masquerade import setup_masquerade
 from cvn_student.forms import ProctorForm
 from cvn_student.models import Proctor
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django_future.csrf import ensure_csrf_cookie
 from external_auth.models import ExternalAuthMap
 from ims_lti_py import ToolConsumer, ToolConfig
@@ -19,126 +16,10 @@ from student.models import UserProfile
 from student.views import cert_info
 from student.views import course_from_id
 from student.views import exam_registration_info
-import django.contrib.auth
 import hashlib
 import json
-import re
 
-# TODO: check on this import
-from courseware.courses import (get_courses, get_course_with_access,
-                                get_courses_by_university, sort_by_announcement)
-
-
-def login(request):
-    '''
-    If user is already logged in, redirects him to the dashboard
-    If user isn't logged in, redirects them to WIND login
-    If user is coming back from WIND, authenticates with ticket id
-    If user is coming from the old CVN, authenticates with CVN-generated ticket
-    '''
-    reqData = request.POST
-    if request.user.is_authenticated():
-        return redirect(reverse('dashboard'))
-    if 'ticketid' in request.GET:
-        user = authenticate(request=request, token=request.GET.get('ticketid', ''))
-
-        # FIXME: 
-        # if isinstance(user, HttpResponse):
-            # Raise some kind of exception
-
-        if user is not None:
-            if user.is_active:
-                print "You provided a correct username and password!"
-                django.contrib.auth.login(request, user)
-            else:
-                return HttpResponse('Your account has been disabled!')
-        else:
-            return HttpResponse('Your username and password were incorrect.')
-        #if user is a professor, redirect them to cms
-        user_groups = [g.name for g in user.groups.all()]
-        pattern = re.compile("instructor|staff")
-        returnable = ''
-        for user_group in user_groups:
-            if pattern.match(user_group):
-                return redirect(settings.CMS_URL)
-        return redirect(reverse('dashboard'))
-
-    elif 'email' in reqData and 'first' in reqData and 'last' in reqData and 'token' in reqData:
-        '''
-        User is logging in via the old PHP CVN web app
-        available GET variables: email, first, last, token
-        '''
-        user = authenticate(user_email=reqData['email'], first=reqData['first'],
-                             last=reqData['last'], token=reqData['token'], username=None)
-        if user is not None:
-            if user.is_active:
-                print "You provided a correct username and password!"
-                django.contrib.auth.login(request, user)
-            else:
-                return HttpResponse('Your account has been disabled!')
-        else:
-            return HttpResponse('CVN authentication failed.')
-        #if user is a professor, redirect them to cms
-        user_groups = [g.name for g in user.groups.all()]
-        pattern = re.compile("instructor|staff")
-        returnable = ''
-        for user_group in user_groups:
-            if pattern.match(user_group):
-                return redirect(settings.CMS_URL)
-        return redirect(reverse('dashboard'))
-    else:
-        '''
-        No post or get requests, so redirect user to Columbia WIND login
-        '''
-        return redirect(settings.WIND_LOGIN_URL + "?destination=" + settings.WIND_DESTINATION)
-
-
-def fakewind(request):
-    return HttpResponse("Hello, world. You're at fake WIND.")
-
-def register(request):
-    return redirect("http://cvn.columbia.edu/");
-
-LTI_LAUNCH_URL = settings.LTI_LAUNCH_URL
-LTI_CONSUMER_KEY = settings.LTI_CONSUMER_KEY
-LTI_CONSUMER_SECRET = settings.LTI_CONSUMER_SECRET
-
-
-
-def course_dashboard(request, org, course, name):
-    #TODO: display course roster for a class
-    #CourseEnrollment.get(user=request.user.id)
-    #user = User.objects.get(id=request.user.id)
-    #userProfile = UserProfile.objects.get(user_id=user.id)
-    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
-    returnable = ''
-    for courseEnrollment in courseEnrollments:
-        #user = User.objects.get(...
-        returnable += str(courseEnrollment.user.username)+'<br />'
-    return HttpResponse(returnable)
-    return HttpResponse("Welcome to the professor dashboard!")
-
-@login_required
-@ensure_csrf_cookie
-def course_dashboard(request, org, course, name):
-    """
-    Display an editable asset library
-
-    org, course, name: Attributes of the Location for the item to edit
-    """
-    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
-    '''
-    returnable = ''
-    for courseEnrollment in courseEnrollments:
-        #user = User.objects.get(...
-        returnable += str(courseEnrollment.user.username)+'<br />'
-    return HttpResponse(returnable)
-    return HttpResponse("Welcome to the professor dashboard!")
-    '''
-
-    return render_to_response('dashboard_index.html', {'courseEnrollments':courseEnrollments})
-
-
+from courseware.courses import get_courses, get_course_with_access
 
 @login_required
 @ensure_csrf_cookie
@@ -312,13 +193,3 @@ def piazza_redirect(request):
       From the user's perspective, this view redirects signs them into Piazza
     '''
     return render_to_response('courseware/piazza_redirect.html', {'launch_data':request.GET, 'launch_url':LTI_LAUNCH_URL})
-
-
-def course_dashboard(request, org, course, name):
-    #TODO: display course roster for a class
-    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
-    returnable = ''
-    for courseEnrollment in courseEnrollments:
-        returnable += str(courseEnrollment.user.username)+'<br />'
-    return HttpResponse(returnable)
-    return HttpResponse("Welcome to the professor dashboard!")

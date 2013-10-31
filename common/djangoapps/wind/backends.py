@@ -9,6 +9,7 @@ import random
 import string
 from django.db import connection, connections, transaction
 import time
+import logging
 
 class WindBackend(object):
     """
