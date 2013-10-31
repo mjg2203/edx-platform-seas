@@ -42,7 +42,9 @@ class WindBackend(object):
                 user.is_active = True;
                 user.save()
             return user
-        return None
+        else:
+            logging.error("Bad WIND ticket! Ticket value was: %s" % token)
+            return None
 
     def get_user(self, user_email):
         try:
