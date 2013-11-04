@@ -66,3 +66,5 @@ CVN_ANALYTICS_USERS = (
     'mjg2203',
     'ljc2147',
 )
+
+WIKI_ENABLED = False
