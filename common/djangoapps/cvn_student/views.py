@@ -16,8 +16,12 @@ from student.models import UserProfile
 from student.views import cert_info
 from student.views import course_from_id
 from student.views import exam_registration_info
+from xmodule.modulestore.exceptions import ItemNotFoundError
 import hashlib
 import json
+import logging
+
+log = logging.getLogger("mitx.student")
 
 from courseware.courses import get_courses, get_course_with_access
 
