@@ -15,3 +15,12 @@ MITX_FEATURES['ENABLE_CREATOR_GROUP'] = True
 DEFAULT_FROM_EMAIL = 'lms@lms.cvn.columbia.edu'
 DEFAULT_FEEDBACK_EMAIL = 'lms@lms.cvn.columbia.edu'
 SERVER_EMAIL = 'lms@lms.cvn.columbia.edu'
+
+DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': ENV_TOKENS.get('MYSQL_DBNAME'),
+        'USER': ENV_TOKENS.get('MYSQL_USER'),
+        'PASSWORD': ENV_TOKENS.get('MYSQL_PASSWORD'),
+        'HOST': ENV_TOKENS.get('MYSQL_HOST', '127.0.0.1'),
+        'PORT': '3306',
+}

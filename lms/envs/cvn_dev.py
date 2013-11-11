@@ -33,6 +33,15 @@ DATABASES['cvn_php'] = {
         'NAME': ENV_ROOT / "db" / "cvn_php_dev.db",
 }
 
+DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': ENV_TOKENS.get('MYSQL_DBNAME'),
+        'USER': ENV_TOKENS.get('MYSQL_USER'),
+        'PASSWORD': ENV_TOKENS.get('MYSQL_PASSWORD'),
+        'HOST': ENV_TOKENS.get('MYSQL_HOST', '127.0.0.1'),
+        'PORT': '3306',
+}
+
 MIDDLEWARE_CLASSES += ('wind.middleware.DisableCSRF',)
 
 MKTG_URL_LINK_MAP['FAQ'] = None
