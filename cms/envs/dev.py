@@ -18,7 +18,7 @@ LOGGING = get_logger_config(ENV_ROOT / "log",
 
 DOC_STORE_CONFIG = {
     'host': 'localhost',
-    'db': 'xmodule',
+    'db': 'edxapp',
     'collection': 'modulestore',
 }
 
@@ -50,7 +50,7 @@ CONTENTSTORE = {
     'ENGINE': 'xmodule.contentstore.mongo.MongoContentStore',
     'OPTIONS': {
         'host': 'localhost',
-        'db': 'xcontent',
+        'db': 'edxapp',
     },
     # allow for additional options that can be keyed on a name, e.g. 'trashcan'
     'ADDITIONAL_OPTIONS': {
