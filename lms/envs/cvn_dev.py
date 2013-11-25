@@ -63,3 +63,5 @@ CVN_ANALYTICS_USERS = (
     'mjg2203',
     'ljc2147',
 )
+
+CVN_ENABLE_PROCTOR=True

@@ -121,13 +121,17 @@
           <span class="title"><div class="icon email-icon"></div>${_("Email")}
           </span> <span class="data">${ user.email | h }</span>
         </li>
-        <li>
-          <span class="title"><div class="icon name-icon"></div>${_("Proctor")}
-            % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
-            (<a href="#change_proctorinfo" rel="leanModal" class="edit-proctorinfo">${_("edit proctor info")}</a>)
-            % endif
-          </span> <span class="data">${ user.email | h }</span>
-        </li>
+        %if settings.CVN_ENABLE_PROCTOR:
+          <li>
+            <span class="title"><div class="icon name-icon"></div>${_("Proctor")}
+              % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
+              (<a href="#change_proctorinfo" rel="leanModal" class="edit-proctorinfo">${_("edit proctor info")}</a>)
+              % endif
+            </span> <span class="data">${ user.email | h }</span>
+          </li>
+        %else:
+          <!-- proctors disabled for now (mjg) -->
+        %endif
       </ul>
     </section>
 
