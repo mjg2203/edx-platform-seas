@@ -46,12 +46,6 @@ class WindBackend(object):
             logging.error("Bad WIND ticket! Ticket value was: %s" % token)
             return None
 
-    def get_user(self, user_email):
-        try:
-            return User.objects.get(email=user_email)
-        except User.DoesNotExist:
-            return None
-
 class OldCVNBackend(object):
     """
     Authenticate token against WIND server.
@@ -88,9 +82,3 @@ class OldCVNBackend(object):
                 user.save()
             return user
         return None
-
-    def get_user(self, user_email):
-        try:
-            return User.objects.get(email=user_email)
-        except User.DoesNotExist:
-            return None

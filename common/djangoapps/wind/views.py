@@ -1,6 +1,5 @@
 # Create your views here.
 from django.http import HttpResponse
-from django.template import RequestContext, loader
 from django.contrib.auth.decorators import login_required
 from django_future.csrf import ensure_csrf_cookie
 import requests
@@ -89,9 +88,6 @@ def login(request):
         No post or get requests, so redirect user to Columbia WIND login
         '''
         return redirect(settings.WIND_LOGIN_URL + "?destination=" + settings.WIND_DESTINATION)
-        '''template = loader.get_template('wind/index.html')
-        context = RequestContext(request, {})
-        return HttpResponse(template.render(context))'''
 
 
     
@@ -100,23 +96,3 @@ def fakewind(request):
 
 def register(request):
     return redirect("http://cvn.columbia.edu/");
-
-@login_required
-@ensure_csrf_cookie
-def course_dashboard(request, org, course, name):
-    """
-    Display an editable asset library
-
-    org, course, name: Attributes of the Location for the item to edit
-    """
-    courseEnrollments = CourseEnrollment.objects.filter(course_id=org+'/'+course+'/'+name)
-    '''
-    returnable = ''
-    for courseEnrollment in courseEnrollments:
-        #user = User.objects.get(...
-        returnable += str(courseEnrollment.user.username)+'<br />'
-    return HttpResponse(returnable)
-    return HttpResponse("Welcome to the professor dashboard!")
-    '''
-
-    return render_to_response('dashboard_index.html', {'courseEnrollments':courseEnrollments})
