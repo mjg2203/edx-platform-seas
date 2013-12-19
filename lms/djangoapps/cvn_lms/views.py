@@ -22,8 +22,6 @@ from courseware.masquerade import setup_masquerade
 #from .module_render import toc_for_course, get_module_for_descriptor, get_module
 from courseware.models import StudentModule, StudentModuleHistory
 
-from django_comment_client.utils import get_discussion_title
-
 from student.models import UserTestGroup, CourseEnrollment
 from util.cache import cache, cache_if_anonymous
 from xmodule.modulestore import Location
@@ -31,9 +29,6 @@ from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.exceptions import InvalidLocationError, ItemNotFoundError, NoPathToItem
 from xmodule.modulestore.search import path_to_location
 from xmodule.course_module import CourseDescriptor
-
-import comment_client
-
 
 @login_required
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
