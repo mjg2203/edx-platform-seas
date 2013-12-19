@@ -9,6 +9,7 @@ Run like this:
 
 import json
 import os
+import pprint
 import unittest
 
 from mock import Mock
@@ -18,6 +19,7 @@ from xblock.field_data import DictFieldData
 from xmodule.x_module import ModuleSystem, XModuleDescriptor, XModuleMixin
 from xmodule.modulestore.inheritance import InheritanceMixin
 from xmodule.mako_module import MakoDescriptorSystem
+from xmodule.error_module import ErrorDescriptor
 
 
 # Location of common test DATA directory
@@ -36,6 +38,14 @@ open_ended_grading_interface = {
     }
 
 
+class TestModuleSystem(ModuleSystem):  # pylint: disable=abstract-method
+    """
+    ModuleSystem for testing
+    """
+    def handler_url(self, block, handler, suffix='', query='', thirdparty=False):
+        return str(block.scope_ids.usage_id) + '/' + handler + '/' + suffix + '?' + query
+
+
 def get_test_system(course_id=''):
     """
     Construct a test ModuleSystem instance.
@@ -49,22 +59,22 @@ def get_test_system(course_id=''):
     where `my_render_func` is a function of the form my_render_func(template, context).
 
     """
-    return ModuleSystem(
-        ajax_url='courses/course_id/modx/a_location',
+    return TestModuleSystem(
+        static_url='/static',
         track_function=Mock(),
         get_module=Mock(),
-        render_template=lambda template, context: repr(context),
-        replace_urls=lambda html: str(html),
+        render_template=mock_render_template,
+        replace_urls=str,
         user=Mock(is_staff=False),
         filestore=Mock(),
         debug=True,
         hostname="edx.org",
         xqueue={'interface': None, 'callback_url': '/', 'default_queuename': 'testqueue', 'waittime': 10, 'construct_callback' : Mock(side_effect="/")},
         node_path=os.environ.get("NODE_PATH", "/usr/local/lib/node_modules"),
-        xmodule_field_data=lambda descriptor: descriptor._field_data,
         anonymous_student_id='student',
         open_ended_grading_interface=open_ended_grading_interface,
         course_id=course_id,
+        error_descriptor_class=ErrorDescriptor,
     )
 
 
@@ -76,9 +86,19 @@ def get_test_descriptor_system():
         load_item=Mock(),
         resources_fs=Mock(),
         error_tracker=Mock(),
-        render_template=lambda template, context: repr(context),
+        render_template=mock_render_template,
         mixins=(InheritanceMixin, XModuleMixin),
     )
+
+
+def mock_render_template(*args, **kwargs):
+    """
+    Pretty-print the args and kwargs.
+
+    Allows us to not depend on any actual template rendering mechanism,
+    while still returning a unicode object
+    """
+    return pprint.pformat((args, kwargs)).decode()
 
 
 class ModelsTest(unittest.TestCase):
@@ -89,15 +109,6 @@ class ModelsTest(unittest.TestCase):
         vc = XModuleDescriptor.load_class('video')
         vc_str = "<class 'xmodule.video_module.VideoDescriptor'>"
         self.assertEqual(str(vc), vc_str)
-
-class PostData(object):
-    """Class which emulate postdata."""
-    def __init__(self, dict_data):
-        self.dict_data = dict_data
-
-    def getlist(self, key):
-        """Get data by key from `self.dict_data`."""
-        return self.dict_data.get(key)
 
 
 class LogicTest(unittest.TestCase):

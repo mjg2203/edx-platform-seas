@@ -10,8 +10,6 @@ from django.utils.translation import ugettext as _
 import branding
 # app that handles site status messages
 from status.status import get_site_status_msg
-# shopping cart
-import shoppingcart
 %>
 
 ## Provide a hook for themes to inject branding on top.
@@ -58,11 +56,11 @@ site_status_msg = get_site_status_msg(course_id)
 
     <ol class="left nav-global authenticated">
       <%block name="navigation_global_links_authenticated">
-        % if settings.MITX_FEATURES.get('COURSES_ARE_BROWSABLE'):
+        % if settings.FEATURES.get('COURSES_ARE_BROWSABLE'):
           <li class="nav-global-01">
             <a href="${marketing_link('COURSES')}">${_('Find Courses')}</a>
           </li>
-        % endif  
+        % endif
       </%block>
     </ol>
     <ol class="user">
@@ -73,8 +71,8 @@ site_status_msg = get_site_status_msg(course_id)
         </a>
       </li>
       <li class="primary">
-        <a href="#" class="dropdown"><span class="sr">${_("More options dropdown")}</span> &#9662;</a>
-        <ul class="dropdown-menu">
+        <a href="#" class="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr">${_("More options dropdown")}</span> &#9662;</a>
+        <ul class="dropdown-menu" aria-label="More Options" role="menu">
           <%block name="navigation_dropdown_menu_links" >
             <li><a href="${marketing_link('FAQ')}">${_("Help")}</a></li>
           </%block>
@@ -86,13 +84,11 @@ site_status_msg = get_site_status_msg(course_id)
             <li><a href="${settings.CMS_URL}">${_("Enter Studio")}</a></li>
           % endif
 
-          <li><a href="${reverse('logout')}">${_("Log out")}</a></li>
+          <li role="presentation"><a href="${reverse('logout')}" role="menuitem">${_("Log Out")}</a></li>
         </ul>
       </li>
     </ol>
-      % if settings.MITX_FEATURES.get('ENABLE_PAID_COURSE_REGISTRATION') and \
-           settings.MITX_FEATURES.get('ENABLE_SHOPPING_CART') and \
-           shoppingcart.models.Order.user_cart_has_items(user):
+      % if display_shopping_cart: # see shoppingcart.context_processor.user_has_cart_context_processor
         <ol class="user">
           <li class="primary">
             <a class="shopping-cart" href="${reverse('shoppingcart.views.show_cart')}">
@@ -104,7 +100,7 @@ site_status_msg = get_site_status_msg(course_id)
     % else:
     <ol class="left nav-global">
       <%block name="navigation_global_links">
-        % if settings.MITX_FEATURES.get('ENABLE_MKTG_SITE'):
+        % if settings.FEATURES.get('ENABLE_MKTG_SITE'):
           <li class="nav-global-01">
             <a href="${marketing_link('HOW_IT_WORKS')}">${_("How it Works")}</a>
           </li>
@@ -116,8 +112,8 @@ site_status_msg = get_site_status_msg(course_id)
           </li>
         % endif
       </%block>
-      % if not settings.MITX_FEATURES['DISABLE_LOGIN_BUTTON']:
-          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
+      % if not settings.FEATURES['DISABLE_LOGIN_BUTTON']:
+          % if course and settings.FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
           <li class="nav-global-04">
             <a class="cta cta-register" href="${reverse('course-specific-register', args=[course.id])}">${_("Register Now")}</a>
           </li>
@@ -128,8 +124,8 @@ site_status_msg = get_site_status_msg(course_id)
 
     
     
-      % if not settings.MITX_FEATURES['DISABLE_LOGIN_BUTTON']:
-          % if course and settings.MITX_FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
+      % if not settings.FEATURES['DISABLE_LOGIN_BUTTON']:
+          % if course and settings.FEATURES.get('RESTRICT_ENROLL_BY_REG_METHOD') and course.enrollment_domain:
           #<a  href="${reverse('course-specific-login', args=[course.id])}${login_query()}">${_("Log in")}</a>
           #% else:
           #<a class="cta cta-login" href="${reverse('signin_user')}${login_query()}">${_("Log in with UNI")}</a> <span style="margin:0 10px">or</span> <a href="${settings.CVN_SC_URL}" style="padding:0; font-size:12px; color:#0000aa">Log in through CVN</a>

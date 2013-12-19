@@ -20,7 +20,7 @@ def get_visible_courses(domain=None):
                if isinstance(c, CourseDescriptor)]
     courses = sorted(courses, key=lambda course: course.number)
 
-    if domain and settings.MITX_FEATURES.get('SUBDOMAIN_COURSE_LISTINGS'):
+    if domain and settings.FEATURES.get('SUBDOMAIN_COURSE_LISTINGS'):
         subdomain = pick_subdomain(domain, settings.COURSE_LISTINGS.keys())
         visible_ids = frozenset(settings.COURSE_LISTINGS[subdomain])
         return [course for course in courses if course.id in visible_ids]
@@ -33,7 +33,7 @@ def get_university(domain=None):
     Return the university name specified for the domain, or None
     if no university was specified
     """
-    if not settings.MITX_FEATURES['SUBDOMAIN_BRANDING'] or domain is None:
+    if not settings.FEATURES['SUBDOMAIN_BRANDING'] or domain is None:
         return None
 
     subdomain = pick_subdomain(domain, settings.SUBDOMAIN_BRANDING.keys())
@@ -47,8 +47,10 @@ def get_logo_url(domain=None):
     university = get_university(domain)
 
     if university is None:
-        return '/static/images/header-logo.png'
+        return '{static_url}images/header-logo.png'.format(
+            static_url=settings.STATIC_URL
+        )
 
-    return '/static/images/{uni}-on-edx-logo.png'.format(
-        uni=university
+    return '{static_url}images/{uni}-on-edx-logo.png'.format(
+        static_url=settings.STATIC_URL, uni=university
     )

@@ -75,7 +75,7 @@ class CrowdsourceHinterModule(CrowdsourceHinterFields, XModule):
     js_module_name = "Hinter"
 
     def __init__(self, *args, **kwargs):
-        XModule.__init__(self, *args, **kwargs)
+        super(CrowdsourceHinterModule, self).__init__(*args, **kwargs)
         # We need to know whether we are working with a FormulaResponse problem.
         try:
             responder = self.get_display_items()[0].lcp.responders.values()[0]
@@ -113,17 +113,17 @@ class CrowdsourceHinterModule(CrowdsourceHinterFields, XModule):
 
         try:
             child = self.get_display_items()[0]
-            out = self.runtime.render_child(child, None, 'student_view').content
+            out = child.render('student_view').content
             # The event listener uses the ajax url to find the child.
-            child_url = child.runtime.ajax_url
+            child_id = child.id
         except IndexError:
             out = u"Error in loading crowdsourced hinter - can't find child problem."
-            child_url = ''
+            child_id = ''
 
         # Wrap the module in a <section>.  This lets us pass data attributes to the javascript.
-        out += u'<section class="crowdsource-wrapper" data-url="{ajax_url}" data-child-url="{child_url}"> </section>'.format(
+        out += u'<section class="crowdsource-wrapper" data-url="{ajax_url}" data-child-id="{child_id}"> </section>'.format(
             ajax_url=self.runtime.ajax_url,
-            child_url=child_url
+            child_id=child_id
         )
 
         return out

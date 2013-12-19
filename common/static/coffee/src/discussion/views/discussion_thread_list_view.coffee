@@ -124,8 +124,11 @@ if Backbone?
     loadMorePages: (event) ->
       if event
         event.preventDefault()
-      @$(".more-pages").html('<div class="loading-animation"></div>')
+      @$(".more-pages").html('<div class="loading-animation" tabindex=0><span class="sr" role="alert">Loading more threads</span></div>')
       @$(".more-pages").addClass("loading")
+      loadingDiv = @$(".more-pages .loading-animation")
+      DiscussionUtil.makeFocusTrap(loadingDiv)
+      loadingDiv.focus()
       options = {}
       switch @mode
         when 'search'
@@ -156,7 +159,11 @@ if Backbone?
           $(".post-list a").first()?.focus()
         )
 
-      @collection.retrieveAnotherPage(@mode, options, {sort_key: @sortBy})
+      error = =>
+        @renderThreads()
+        DiscussionUtil.discussionAlert("Sorry", "We had some trouble loading more threads. Please try again.")
+
+      @collection.retrieveAnotherPage(@mode, options, {sort_key: @sortBy}, error)
 
     renderThread: (thread) =>
       content = $(_.template($("#thread-list-item-template").html())(thread.toJSON()))
@@ -405,7 +412,7 @@ if Backbone?
         type: "GET"
         $loading: $
         loadingCallback: =>
-          @$(".post-list").html('<li class="loading"><div class="loading-animation"></div></li>')
+          @$(".post-list").html('<li class="loading"><div class="loading-animation"><span class="sr">Loading thread list</span></div></li>')
         loadedCallback: =>
           if callback
             callback.apply @, [value]

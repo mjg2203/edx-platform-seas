@@ -2,13 +2,6 @@
 
 <%!
   from django.core.urlresolvers import reverse
-  from courseware.courses import course_image_url, get_course_about_section
-  from courseware.access import has_access
-  from certificates.models import CertificateStatuses
-  
-  from xmodule.modulestore import MONGO_MODULESTORE_TYPE
-  from xmodule.modulestore.django import modulestore
-
   import waffle
 %>
 <%inherit file="main.html" />
@@ -22,6 +15,29 @@
 <script type="text/javascript" src="${static.url('js/vendor/jquery.form.js')}"></script>
   <script type="text/javascript">
   (function() {
+
+    $('.message.is-expandable .wrapper-tip').bind('click', toggleExpandMessage);
+
+    function toggleExpandMessage(e) {
+        (e).preventDefault();
+
+        $(this).closest('.message.is-expandable').toggleClass('is-expanded');
+    }
+
+    $("#upgrade-to-verified").click(function(event) {
+      user = $(event.target).data("user");
+      course = $(event.target).data("course-id");
+      Logger.log('edx.course.enrollment.upgrade.clicked', [user, course], null);
+      % if waffle.flag_is_active(request, 'alternate_upsell_copy'):
+      analytics.track("Clicked on Alternate Upsell Copy", {
+        course: course
+      });
+      % else:
+      analytics.track("Clicked on Regular Upsell Copy", {
+        course: course
+      });
+      % endif
+    });
 
     $(".email-settings").click(function(event) {
       $("#email_settings_course_id").val( $(event.target).data("course-id") );
@@ -44,7 +60,7 @@
           $("#unenroll_course_id").val() + "&enrollment_action=unenroll";
       } else {
         $('#unenroll_error').html(
-          xhr.responseText ? xhr.responseText : "An error occurred. Please try again later."
+          xhr.responseText ? xhr.responseText : "${_('An error occurred. Please try again later.')}"
         ).stop().css("display", "block");
       }
     });
@@ -95,11 +111,11 @@
       });
       return false;
     });
-  })(this)
+  })(this);
   </script>
 </%block>
 
-<section class="container dashboard">
+<section class="container dashboard" id="dashboard-main" aria-hidden="false">
 
   %if message:
     <section class="dashboard-banner">
@@ -113,11 +129,11 @@
     </header>
     <section class="user-info">
       <ul>
-        <li>
+        <li class="info--username">
           <span class="title"><div class="icon name-icon"></div>${_("Full Name")} </span>
           <span class="data">${ user.profile.name | h }</span>
         </li>
-        <li>
+        <li class="info--email">
           <span class="title"><div class="icon email-icon"></div>${_("Email")}
           </span> <span class="data">${ user.email | h }</span>
         </li>
@@ -142,7 +158,7 @@
       <h2>${_("Current Courses")}</h2>
     </header>
 
-    % if len(courses) > 0:
+    % if len(course_enrollment_pairs) > 0:
       <ul class="listing-courses">
         % for course, enrollment in courses:
         <li class="course-item">
@@ -320,7 +336,7 @@
       </ul>
     % else:
       <section class="empty-dashboard-message">
-        % if settings.MITX_FEATURES.get('COURSES_ARE_BROWSABLE'):
+        % if settings.FEATURES.get('COURSES_ARE_BROWSABLE'):
           <p>${_("Looks like you haven't registered for any courses yet.")}</p>
           <a href="${marketing_link('COURSES')}">
             ${_("Find courses now!")}
@@ -352,7 +368,7 @@
 <section id="password_reset_complete" class="modal">
   <div class="inner-wrapper">
     <header>
-      <h2>${_('Password Reset Email Sent')}</h2>
+      <h2 id="password-reset-email">${_('Password Reset Email Sent')}<span class="sr">, ${_("modal open")}</span></h2>
       <hr/>
     </header>
     <div>
@@ -362,7 +378,6 @@
         </section>
       </form>
     </div>
-    <a href="#" role="button" class="close-modal" title="${_('Close Modal')}">&#10005;</a>
   </div>
 </section>
 
@@ -377,9 +392,6 @@
         
         
         <fieldset>
-
-
-
           
 <div class="input-group">
 <p>         
@@ -484,7 +496,24 @@ ${ form['country'] }
         </fieldset>
       </form>
     </div>
-    <a href="#" role="button" class="close-modal" title="${_('Close Modal')}">&#10005;</a>
+  </div>
+</section>
+
+<section id="unenroll-modal" class="modal unenroll-modal" aria-hidden="true">
+  <div class="inner-wrapper" role="alertdialog" aria-labelledy="unenrollment-modal-title">
+    <button class="close-modal">&#10005; <span class="sr">${_('Close Modal')}</span></button>
+    <header>
+      <h2 id="unenrollment-modal-title">${_('<span id="track-info"></span> {course_number}?  <span id="refund-info"></span>').format(course_number='<span id="unenroll_course_number"></span>')}<span class="sr">, ${_("modal open")}</span></h2>
+      <hr/>
+    </header>
+    <div id="unenroll_error" class="modal-form-error"></div>
+    <form id="unenroll_form" method="post" data-remote="true" action="${reverse('change_enrollment')}">
+      <input name="course_id" id="unenroll_course_id" type="hidden" />
+      <input name="enrollment_action" type="hidden" value="unenroll" />
+      <div class="submit">
+        <input name="submit" type="submit" value="${_('Unregister')}" />
+      </div>
+    </form>
   </div>
 </section>
 

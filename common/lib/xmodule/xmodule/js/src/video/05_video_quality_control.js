@@ -8,6 +8,8 @@ function () {
 
     // VideoQualityControl() function - what this module "exports".
     return function (state) {
+        var dfd = $.Deferred();
+
         // Changing quality for now only works for YouTube videos.
         if (state.videoType !== 'youtube') {
             return;
@@ -18,6 +20,9 @@ function () {
         _makeFunctionsPublic(state);
         _renderElements(state);
         _bindHandlers(state);
+
+        dfd.resolve();
+        return dfd.promise();
     };
 
     // ***************************************************************
@@ -29,8 +34,12 @@ function () {
     //     Functions which will be accessible via 'state' object. When called, these functions will
     //     get the 'state' object as a context.
     function _makeFunctionsPublic(state) {
-        state.videoQualityControl.onQualityChange = _.bind(onQualityChange, state);
-        state.videoQualityControl.toggleQuality   = _.bind(toggleQuality, state);
+        var methodsDict = {
+            onQualityChange: onQualityChange,
+            toggleQuality: toggleQuality
+        };
+
+        state.bindTo(methodsDict, state.videoQualityControl, state);
     }
 
     // function _renderElements(state)
@@ -59,12 +68,22 @@ function () {
     // ***************************************************************
 
     function onQualityChange(value) {
+        var controlStateStr;
         this.videoQualityControl.quality = value;
 
         if (_.indexOf(this.config.availableQualities, value) !== -1) {
-            this.videoQualityControl.el.addClass('active');
+            controlStateStr = gettext('HD on');
+            this.videoQualityControl.el
+                                    .addClass('active')
+                                    .attr('title', controlStateStr)
+                                    .text(controlStateStr);
         } else {
-            this.videoQualityControl.el.removeClass('active');
+            controlStateStr = gettext('HD off');
+            this.videoQualityControl.el
+                                    .removeClass('active')
+                                    .attr('title', controlStateStr)
+                                    .text(controlStateStr);
+
         }
     }
 

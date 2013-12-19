@@ -8,11 +8,16 @@ function () {
 
     // VideoControl() function - what this module "exports".
     return function (state) {
+        var dfd = $.Deferred();
+
         state.videoControl = {};
 
         _makeFunctionsPublic(state);
         _renderElements(state);
         _bindHandlers(state);
+
+        dfd.resolve();
+        return dfd.promise();
     };
 
     // ***************************************************************
@@ -24,14 +29,18 @@ function () {
     //     Functions which will be accessible via 'state' object. When called, these functions will
     //     get the 'state' object as a context.
     function _makeFunctionsPublic(state) {
-        state.videoControl.showControls     = _.bind(showControls,state);
-        state.videoControl.hideControls     = _.bind(hideControls,state);
-        state.videoControl.play             = _.bind(play,state);
-        state.videoControl.pause            = _.bind(pause,state);
-        state.videoControl.togglePlayback   = _.bind(togglePlayback,state);
-        state.videoControl.toggleFullScreen = _.bind(toggleFullScreen,state);
-        state.videoControl.exitFullScreen   = _.bind(exitFullScreen,state);
-        state.videoControl.updateVcrVidTime = _.bind(updateVcrVidTime,state);
+        var methodsDict = {
+            exitFullScreen: exitFullScreen,
+            hideControls: hideControls,
+            pause: pause,
+            play: play,
+            showControls: showControls,
+            toggleFullScreen: toggleFullScreen,
+            togglePlayback: togglePlayback,
+            updateVcrVidTime: updateVcrVidTime
+        };
+
+        state.bindTo(methodsDict, state.videoControl, state);
     }
 
     // function _renderElements(state)
@@ -57,7 +66,7 @@ function () {
             state.videoControl.play();
         }
 
-        if (state.videoType === 'html5') {
+        if ((state.videoType === 'html5') && (state.config.autohideHtml5)) {
             state.videoControl.fadeOutTimeout = state.config.fadeOutTimeout;
 
             state.videoControl.el.addClass('html5');
@@ -81,7 +90,7 @@ function () {
         state.videoControl.fullScreenEl.on('click', state.videoControl.toggleFullScreen);
         $(document).on('keyup', state.videoControl.exitFullScreen);
 
-        if (state.videoType === 'html5') {
+        if ((state.videoType === 'html5') && (state.config.autohideHtml5)) {
             state.el.on('mousemove', state.videoControl.showControls);
             state.el.on('keydown', state.videoControl.showControls);
         }
@@ -170,21 +179,40 @@ function () {
 
     function toggleFullScreen(event) {
         event.preventDefault();
-        var fullScreenClassNameEl = this.el.add(document.documentElement);
+        var fullScreenClassNameEl = this.el.add(document.documentElement),
+            win = $(window),
+            text;
 
         if (this.videoControl.fullScreenState) {
-            this.videoControl.fullScreenState = false;
+            this.videoControl.fullScreenState = this.isFullScreen = false;
             fullScreenClassNameEl.removeClass('video-fullscreen');
-            this.isFullScreen = false;
-            this.videoControl.fullScreenEl.attr('title', gettext('Fill browser'))
-                                          .text(gettext('Fill browser'));
+            text = gettext('Fill browser');
+
+            this.resizer
+                .setParams({
+                    container: this.videoEl.parent()
+                })
+                .setMode('width');
+
+            win.scrollTop(this.scrollPos);
         } else {
-            this.videoControl.fullScreenState = true;
+            this.scrollPos = win.scrollTop();
+            win.scrollTop(0);
+            this.videoControl.fullScreenState = this.isFullScreen = true;
             fullScreenClassNameEl.addClass('video-fullscreen');
-            this.isFullScreen = true;
-            this.videoControl.fullScreenEl.attr('title', gettext('Exit full browser'))
-                                          .text(gettext('Exit full browser'));
+            text = gettext('Exit full browser');
+
+            this.resizer
+                .setParams({
+                    container: window
+                })
+                .setMode('both');
+
         }
+
+        this.videoControl.fullScreenEl
+            .attr('title', text)
+            .text(text);
 
         this.trigger('videoCaption.resize', null);
     }

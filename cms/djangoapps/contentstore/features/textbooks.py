@@ -4,12 +4,14 @@
 from lettuce import world, step
 from django.conf import settings
 from common import upload_file
+from nose.tools import assert_equal
 
 TEST_ROOT = settings.COMMON_TEST_DATA_ROOT
 
 
 @step(u'I go to the textbooks page')
 def go_to_uploads(_step):
+    world.wait_for_js_to_load()
     world.click_course_content()
     menu_css = 'li.nav-course-courseware-textbooks a'
     world.css_click(menu_css)
@@ -46,7 +48,7 @@ def name_textbook(_step, name):
 @step(u'I name the (first|second|third) chapter "([^"]*)"')
 def name_chapter(_step, ordinal, name):
     index = ["first", "second", "third"].index(ordinal)
-    input_css = ".textbook .chapter{i} input.chapter-name".format(i=index+1)
+    input_css = ".textbook .chapter{i} input.chapter-name".format(i=index + 1)
     world.css_fill(input_css, name)
     if world.is_firefox():
         world.trigger_event(input_css)
@@ -55,7 +57,7 @@ def name_chapter(_step, ordinal, name):
 @step(u'I type in "([^"]*)" for the (first|second|third) chapter asset')
 def asset_chapter(_step, name, ordinal):
     index = ["first", "second", "third"].index(ordinal)
-    input_css = ".textbook .chapter{i} input.chapter-asset-path".format(i=index+1)
+    input_css = ".textbook .chapter{i} input.chapter-asset-path".format(i=index + 1)
     world.css_fill(input_css, name)
     if world.is_firefox():
         world.trigger_event(input_css)
@@ -64,7 +66,7 @@ def asset_chapter(_step, name, ordinal):
 @step(u'I click the Upload Asset link for the (first|second|third) chapter')
 def click_upload_asset(_step, ordinal):
     index = ["first", "second", "third"].index(ordinal)
-    button_css = ".textbook .chapter{i} .action-upload".format(i=index+1)
+    button_css = ".textbook .chapter{i} .action-upload".format(i=index + 1)
     world.css_click(button_css)
 
 
@@ -82,20 +84,23 @@ def save_textbook(_step):
 
 @step(u'I should see a textbook named "([^"]*)" with a chapter path containing "([^"]*)"')
 def check_textbook(_step, textbook_name, chapter_name):
-    title = world.css_find(".textbook h3.textbook-title")
-    chapter = world.css_find(".textbook .wrap-textbook p")
-    assert title.text == textbook_name, "{} != {}".format(title.text, textbook_name)
-    assert chapter.text == chapter_name, "{} != {}".format(chapter.text, chapter_name)
+    title = world.css_text(".textbook h3.textbook-title", index=0)
+    chapter = world.css_text(".textbook .wrap-textbook p", index=0)
+    assert_equal(title, textbook_name)
+    assert_equal(chapter, chapter_name)
 
 
 @step(u'I should see a textbook named "([^"]*)" with (\d+) chapters')
 def check_textbook_chapters(_step, textbook_name, num_chapters_str):
     num_chapters = int(num_chapters_str)
-    title = world.css_find(".textbook .view-textbook h3.textbook-title")
-    toggle = world.css_find(".textbook .view-textbook .chapter-toggle")
-    assert title.text == textbook_name, "{} != {}".format(title.text, textbook_name)
-    assert toggle.text == "{num} PDF Chapters".format(num=num_chapters), \
-        "Expected {num} chapters, found {real}".format(num=num_chapters, real=toggle.text)
+    title = world.css_text(".textbook .view-textbook h3.textbook-title", index=0)
+    toggle_text = world.css_text(".textbook .view-textbook .chapter-toggle", index=0)
+    assert_equal(title, textbook_name)
+    assert_equal(
+        toggle_text,
+        "{num} PDF Chapters".format(num=num_chapters),
+        "Expected {num} chapters, found {real}".format(num=num_chapters, real=toggle_text)
+    )
 
 
 @step(u'I click the textbook chapters')

@@ -4,7 +4,7 @@ sessions. Assumes structure:
 
 /envroot/
         /db   # This is where it'll write the database file
-        /mitx # The location of this repo
+        /edx-platform  # The location of this repo
         /log  # Where we're going to write log files
 """
 
@@ -21,26 +21,30 @@ os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:8000-9000'
 
 # can't test start dates with this True, but on the other hand,
 # can test everything else :)
-MITX_FEATURES['DISABLE_START_DATES'] = True
+FEATURES['DISABLE_START_DATES'] = True
 
 # Most tests don't use the discussion service, so we turn it off to speed them up.
 # Tests that do can enable this flag, but must use the UrlResetMixin class to force urls.py
 # to reload
-MITX_FEATURES['ENABLE_DISCUSSION_SERVICE'] = False
+FEATURES['ENABLE_DISCUSSION_SERVICE'] = False
 
-MITX_FEATURES['ENABLE_SERVICE_STATUS'] = True
+FEATURES['ENABLE_SERVICE_STATUS'] = True
 
-MITX_FEATURES['ENABLE_HINTER_INSTRUCTOR_VIEW'] = True
+FEATURES['ENABLE_HINTER_INSTRUCTOR_VIEW'] = True
 
-MITX_FEATURES['ENABLE_INSTRUCTOR_BETA_DASHBOARD'] = True
+FEATURES['ENABLE_INSTRUCTOR_BETA_DASHBOARD'] = True
 
-MITX_FEATURES['ENABLE_SHOPPING_CART'] = True
+FEATURES['ENABLE_SHOPPING_CART'] = True
+
+# Enable this feature for course staff grade downloads, to enable acceptance tests
+FEATURES['ENABLE_S3_GRADE_DOWNLOADS'] = True
+FEATURES['ALLOW_COURSE_STAFF_GRADE_DOWNLOADS'] = True
 
 # Need wiki for courseware views to work. TODO (vshnayder): shouldn't need it.
 WIKI_ENABLED = True
 
 # Makes the tests run much faster...
-SOUTH_TESTS_MIGRATE = False   # To disable migrations and use syncdb instead
+SOUTH_TESTS_MIGRATE = False  # To disable migrations and use syncdb instead
 
 # Nose Test Runner
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
@@ -51,7 +55,6 @@ _report_dir = REPO_ROOT / 'reports' / _system
 _report_dir.makedirs_p()
 
 NOSE_ARGS = [
-    '--tests', PROJECT_ROOT / 'djangoapps', COMMON_ROOT / 'djangoapps',
     '--id-file', REPO_ROOT / '.testids' / _system / 'noseids',
     '--xunit-file', _report_dir / 'nosetests.xml',
 ]
@@ -79,7 +82,7 @@ XQUEUE_INTERFACE = {
     },
     "basic_auth": ('anant', 'agarwal'),
 }
-XQUEUE_WAITTIME_BETWEEN_REQUESTS = 5   # seconds
+XQUEUE_WAITTIME_BETWEEN_REQUESTS = 5  # seconds
 
 
 # Don't rely on a real staff grading backend
@@ -116,16 +119,22 @@ INIT_MODULESTORE_ON_STARTUP = False
 
 CONTENTSTORE = {
     'ENGINE': 'xmodule.contentstore.mongo.MongoContentStore',
-    'OPTIONS': {
+    'DOC_STORE_CONFIG': {
         'host': 'localhost',
         'db': 'xcontent',
     }
 }
 
+DOC_STORE_CONFIG = {
+    'host': 'localhost',
+    'db': 'test_xmodule',
+    'collection': 'test_modulestore',
+}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': TEST_ROOT / 'db' / 'mitx.db'
+        'NAME': TEST_ROOT / 'db' / 'edx.db'
     },
 
 }
@@ -135,7 +144,7 @@ CACHES = {
     # In staging/prod envs, the sessions also live here.
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'mitx_loc_mem_cache',
+        'LOCATION': 'edx_loc_mem_cache',
         'KEY_FUNCTION': 'util.memcache.safe_key',
     },
 
@@ -156,7 +165,12 @@ CACHES = {
         'LOCATION': '/var/tmp/mongo_metadata_inheritance',
         'TIMEOUT': 300,
         'KEY_FUNCTION': 'util.memcache.safe_key',
-    }
+    },
+    'loc_cache': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'edx_location_mem_cache',
+    },
+
 }
 
 # Dummy secret key for dev
@@ -166,13 +180,13 @@ SECRET_KEY = '85920908f28904ed733fe576320db18cabd7b6cd'
 filterwarnings('ignore', message='No request passed to the backend, unable to rate-limit')
 
 ################################## OPENID #####################################
-MITX_FEATURES['AUTH_USE_OPENID'] = True
-MITX_FEATURES['AUTH_USE_OPENID_PROVIDER'] = True
+FEATURES['AUTH_USE_OPENID'] = True
+FEATURES['AUTH_USE_OPENID_PROVIDER'] = True
 
 ################################## SHIB #######################################
-MITX_FEATURES['AUTH_USE_SHIB'] = True
-MITX_FEATURES['SHIB_DISABLE_TOS'] = True
-MITX_FEATURES['RESTRICT_ENROLL_BY_REG_METHOD'] = True
+FEATURES['AUTH_USE_SHIB'] = True
+FEATURES['SHIB_DISABLE_TOS'] = True
+FEATURES['RESTRICT_ENROLL_BY_REG_METHOD'] = True
 
 OPENID_CREATE_USERS = False
 OPENID_UPDATE_DETAILS_FROM_SREG = True
@@ -181,7 +195,7 @@ OPENID_PROVIDER_TRUSTED_ROOTS = ['*']
 
 ###################### Payment ##############################3
 # Enable fake payment processing page
-MITX_FEATURES['ENABLE_PAYMENT_FAKE'] = True
+FEATURES['ENABLE_PAYMENT_FAKE'] = True
 # Configure the payment processor to use the fake processing page
 # Since both the fake payment page and the shoppingcart app are using
 # the same settings, we can generate this randomly and guarantee
@@ -198,6 +212,10 @@ CC_PROCESSOR['CyberSource']['MERCHANT_ID'] = "edx"
 CC_PROCESSOR['CyberSource']['SERIAL_NUMBER'] = "0123456789012345678901"
 CC_PROCESSOR['CyberSource']['PURCHASE_ENDPOINT'] = "/shoppingcart/payment_fake"
 
+########################### SYSADMIN DASHBOARD ################################
+FEATURES['ENABLE_SYSADMIN_DASHBOARD'] = True
+GIT_REPO_DIR = TEST_ROOT / "course_repos"
+
 ################################# CELERY ######################################
 
 CELERY_ALWAYS_EAGER = True
@@ -212,7 +230,7 @@ STATICFILES_DIRS.append(("uploads", MEDIA_ROOT))
 
 new_staticfiles_dirs = []
 # Strip out any static files that aren't in the repository root
-# so that the tests can run with only the mitx directory checked out
+# so that the tests can run with only the edx-platform directory checked out
 for static_dir in STATICFILES_DIRS:
     # Handle both tuples and non-tuple directory definitions
     try:
@@ -224,7 +242,7 @@ for static_dir in STATICFILES_DIRS:
         new_staticfiles_dirs.append(static_dir)
 STATICFILES_DIRS = new_staticfiles_dirs
 
-FILE_UPLOAD_TEMP_DIR = PROJECT_ROOT / "uploads"
+FILE_UPLOAD_TEMP_DIR = TEST_ROOT / "uploads"
 FILE_UPLOAD_HANDLERS = (
     'django.core.files.uploadhandler.MemoryFileUploadHandler',
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
@@ -248,4 +266,4 @@ PASSWORD_HASHERS = (
 #   Generated checkid_setup request to http://testserver/openid/provider/login/ with assocication {HMAC-SHA1}{51d49995}{s/kRmA==}
 
 import openid.oidutil
-openid.oidutil.log = lambda message, level=0: None
+openid.oidutil.log = lambda message, level = 0: None

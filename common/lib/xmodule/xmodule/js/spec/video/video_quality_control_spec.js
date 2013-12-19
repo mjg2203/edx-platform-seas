@@ -11,7 +11,9 @@
 
     beforeEach(function() {
       oldOTBD = window.onTouchBasedDevice;
-      window.onTouchBasedDevice = jasmine.createSpy('onTouchBasedDevice').andReturn(false);
+      window.onTouchBasedDevice = jasmine
+                                      .createSpy('onTouchBasedDevice')
+                                      .andReturn(false);
     });
 
     afterEach(function() {
@@ -20,17 +22,39 @@
     });
 
     describe('constructor', function() {
+      var oldYT = window.YT;
+
       beforeEach(function() {
+        window.YT = {
+            Player: function () { },
+            PlayerState: oldYT.PlayerState,
+            ready: function(f){f();}
+        };
+
         initialize();
       });
 
-      // Disabled when ARIA markup was added to the anchor
-      xit('render the quality control', function() {
-        expect(videoControl.secondaryControlsEl.html()).toContain("<a href=\"#\" class=\"quality_control\" title=\"HD\">");
+      afterEach(function () {
+        window.YT = oldYT;
+      });
+
+      it('render the quality control', function() {
+        var container = videoControl.secondaryControlsEl;
+        expect(container).toContain('a.quality_control');
+      });
+
+      it('add ARIA attributes to quality control', function () {
+        var qualityControl = $('a.quality_control');
+        expect(qualityControl).toHaveAttrs({
+          'role': 'button',
+          'title': 'HD off',
+          'aria-disabled': 'false'
+        }); 
       });
 
       it('bind the quality control', function() {
-        expect($('.quality_control')).toHandleWith('click', videoQualityControl.toggleQuality);
+        var handler = videoQualityControl.toggleQuality;
+        expect($('a.quality_control')).toHandleWith('click', handler);
       });
     });
   });

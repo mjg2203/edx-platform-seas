@@ -10,7 +10,7 @@ from django.conf import settings
 from .module_render import get_module
 from xmodule.course_module import CourseDescriptor
 from xmodule.modulestore import Location, XML_MODULESTORE_TYPE
-from xmodule.modulestore.django import modulestore
+from xmodule.modulestore.django import modulestore, loc_mapper
 from xmodule.contentstore.content import StaticContent
 from xmodule.modulestore.exceptions import ItemNotFoundError, InvalidLocationError
 from courseware.model_data import FieldDataCache
@@ -38,11 +38,31 @@ def get_request_for_thread():
         del frame
 
 
+def get_course(course_id, depth=0):
+    """
+    Given a course id, return the corresponding course descriptor.
+
+    If course_id is not valid, raises a ValueError.  This is appropriate
+    for internal use.
+
+    depth: The number of levels of children for the modulestore to cache.
+    None means infinite depth.  Default is to fetch no children.
+    """
+    try:
+        course_loc = CourseDescriptor.id_to_location(course_id)
+        return modulestore().get_instance(course_id, course_loc, depth=depth)
+    except (KeyError, ItemNotFoundError):
+        raise ValueError("Course not found: {}".format(course_id))
+    except InvalidLocationError:
+        raise ValueError("Invalid location: {}".format(course_id))
+
+
 def get_course_by_id(course_id, depth=0):
     """
     Given a course id, return the corresponding course descriptor.
 
     If course_id is not valid, raises a 404.
+
     depth: The number of levels of children for the modulestore to cache. None means infinite depth
     """
     try:
@@ -52,6 +72,7 @@ def get_course_by_id(course_id, depth=0):
         raise Http404("Course not found.")
     except InvalidLocationError:
         raise Http404("Invalid location")
+
 
 def get_course_with_access(user, course_id, action, depth=0):
     """
@@ -87,27 +108,27 @@ def course_image_url(course):
     if course.static_asset_path or modulestore().get_modulestore_type(course.location.course_id) == XML_MODULESTORE_TYPE:
         return '/static/' + (course.static_asset_path or getattr(course, 'data_dir', '')) + "/images/course_image.jpg"
     else:
-        loc = course.location._replace(tag='c4x', category='asset', name='images_course_image.jpg')
-        path = StaticContent.get_url_path_from_location(loc)
+        loc = course.location.replace(tag='c4x', category='asset', name=course.course_image)
+        _path = StaticContent.get_url_path_from_location(loc)
         try:
-            f = urllib2.urlopen(urllib2.Request(build_absolute_uri(path)))
-            return path
+            f = urllib2.urlopen(urllib2.Request(build_absolute_uri(_path)))
+            return _path
         except:
             return '/static/images/columbia_logo.png'
 
-def find_file(fs, dirs, filename):
+def find_file(filesystem, dirs, filename):
     """
     Looks for a filename in a list of dirs on a filesystem, in the specified order.
 
-    fs: an OSFS filesystem
+    filesystem: an OSFS filesystem
     dirs: a list of path objects
     filename: a string
 
     Returns d / filename if found in dir d, else raises ResourceNotFoundError.
     """
-    for d in dirs:
-        filepath = path(d) / filename
-        if fs.exists(filepath):
+    for directory in dirs:
+        filepath = path(directory) / filename
+        if filesystem.exists(filepath):
             return filepath
     raise ResourceNotFoundError("Could not find {0}".format(filename))
 
@@ -151,7 +172,7 @@ def get_course_about_section(course, section_key):
 
             request = get_request_for_thread()
 
-            loc = course.location._replace(category='about', name=section_key)
+            loc = course.location.replace(category='about', name=section_key)
 
             # Use an empty cache
             field_data_cache = FieldDataCache([], course.id, request.user)
@@ -169,7 +190,7 @@ def get_course_about_section(course, section_key):
             html = ''
 
             if about_module is not None:
-                html = about_module.runtime.render(about_module, None, 'student_view').content
+                html = about_module.render('student_view').content
 
             return html
 
@@ -187,7 +208,6 @@ def get_course_about_section(course, section_key):
     raise KeyError("Invalid about key " + str(section_key))
 
 
-
 def get_course_info_section(request, course, section_key):
     """
     This returns the snippet of html to be rendered on the course info page,
@@ -199,8 +219,6 @@ def get_course_info_section(request, course, section_key):
     - updates
     - guest_updates
     """
-
-
     loc = Location(course.location.tag, course.location.org, course.location.course, 'course_info', section_key)
 
     # Use an empty cache
@@ -218,7 +236,7 @@ def get_course_info_section(request, course, section_key):
     html = ''
 
     if info_module is not None:
-        html = info_module.runtime.render(info_module, None, 'student_view').content
+        html = info_module.render('student_view').content
 
     return html
 
@@ -242,13 +260,13 @@ def get_course_syllabus_section(course, section_key):
 
     if section_key in ['syllabus', 'guest_syllabus']:
         try:
-            fs = course.system.resources_fs
+            filesys = course.system.resources_fs
             # first look for a run-specific version
             dirs = [path("syllabus") / course.url_name, path("syllabus")]
-            filepath = find_file(fs, dirs, section_key + ".html")
-            with fs.open(filepath) as htmlFile:
+            filepath = find_file(filesys, dirs, section_key + ".html")
+            with filesys.open(filepath) as html_file:
                 return replace_static_urls(
-                    htmlFile.read().decode('utf-8'),
+                    html_file.read().decode('utf-8'),
                     getattr(course, 'data_dir', None),
                     course_id=course.location.course_id,
                     static_asset_path=course.static_asset_path,
@@ -302,17 +320,12 @@ def sort_by_announcement(courses):
     return courses
 
 
-def get_cms_course_link_by_id(course_id):
+def get_cms_course_link(course):
     """
-    Returns a proto-relative link to course_index for editing the course in cms, assuming that the course is actually
-    cms-backed. If course_id is improperly formatted, just return the root of the cms
+    Returns a link to course_index for editing the course in cms,
+    assuming that the course is actually cms-backed.
     """
-    format_str = r'^(?P<org>[^/]+)/(?P<course>[^/]+)/(?P<name>[^/]+)$'
-    host = "//{}/".format(settings.CMS_BASE)  # protocol-relative
-    m_obj = re.match(format_str, course_id)
-    if m_obj:
-        return "{host}{org}/{course}/course/{name}".format(host=host,
-                                                           org=m_obj.group('org'),
-                                                           course=m_obj.group('course'),
-                                                           name=m_obj.group('name'))
-    return host
+    locator = loc_mapper().translate_location(
+        course.location.course_id, course.location, False, True
+    )
+    return "//" + settings.CMS_BASE + locator.url_reverse('course/', '')

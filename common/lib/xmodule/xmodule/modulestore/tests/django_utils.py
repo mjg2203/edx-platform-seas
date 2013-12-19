@@ -52,13 +52,15 @@ def mongo_store_config(data_dir):
     store = {
         'default': {
             'ENGINE': 'xmodule.modulestore.mongo.MongoModuleStore',
-            'OPTIONS': {
-                'default_class': 'xmodule.raw_module.RawDescriptor',
+            'DOC_STORE_CONFIG': {
                 'host': 'localhost',
                 'db': 'test_xmodule',
-                'collection': 'modulestore_%s' % uuid4().hex,
+                'collection': 'modulestore{0}'.format(uuid4().hex[:5]),
+            },
+            'OPTIONS': {
+                'default_class': 'xmodule.raw_module.RawDescriptor',
                 'fs_root': data_dir,
-                'render_template': 'mitxmako.shortcuts.render_to_string'
+                'render_template': 'edxmako.shortcuts.render_to_string'
             }
         }
     }
@@ -74,16 +76,18 @@ def draft_mongo_store_config(data_dir):
 
     modulestore_options = {
         'default_class': 'xmodule.raw_module.RawDescriptor',
-        'host': 'localhost',
-        'db': 'test_xmodule',
-        'collection': 'modulestore_%s' % uuid4().hex,
         'fs_root': data_dir,
-        'render_template': 'mitxmako.shortcuts.render_to_string'
+        'render_template': 'edxmako.shortcuts.render_to_string'
     }
 
     store = {
         'default': {
             'ENGINE': 'xmodule.modulestore.mongo.draft.DraftModuleStore',
+            'DOC_STORE_CONFIG': {
+                'host': 'localhost',
+                'db': 'test_xmodule',
+                'collection': 'modulestore{0}'.format(uuid4().hex[:5]),
+            },
             'OPTIONS': modulestore_options
         }
     }
@@ -114,30 +118,36 @@ def studio_store_config(data_dir):
     """
     Defines modulestore structure used by Studio tests.
     """
-    options = {
-        'default_class': 'xmodule.raw_module.RawDescriptor',
+    store_config = {
         'host': 'localhost',
         'db': 'test_xmodule',
-        'collection': 'modulestore_%s' % uuid4().hex,
+        'collection': 'modulestore{0}'.format(uuid4().hex[:5]),
+    }
+    options = {
+        'default_class': 'xmodule.raw_module.RawDescriptor',
         'fs_root': data_dir,
-        'render_template': 'mitxmako.shortcuts.render_to_string',
+        'render_template': 'edxmako.shortcuts.render_to_string',
     }
 
     store = {
         'default': {
             'ENGINE': 'xmodule.modulestore.draft.DraftModuleStore',
+            'DOC_STORE_CONFIG': store_config,
             'OPTIONS': options
         },
         'direct': {
             'ENGINE': 'xmodule.modulestore.mongo.MongoModuleStore',
+            'DOC_STORE_CONFIG': store_config,
             'OPTIONS': options
         },
         'draft': {
             'ENGINE': 'xmodule.modulestore.draft.DraftModuleStore',
+            'DOC_STORE_CONFIG': store_config,
             'OPTIONS': options
         },
         'split': {
             'ENGINE': 'xmodule.modulestore.split_mongo.SplitMongoModuleStore',
+            'DOC_STORE_CONFIG': store_config,
             'OPTIONS': options
         }
     }
@@ -206,7 +216,7 @@ class ModuleStoreTestCase(TestCase):
         If using a Mongo-backed modulestore, drop the collection.
         """
 
-        # This will return the mongo-backed modulestore 
+        # This will return the mongo-backed modulestore
         # even if we're using a mixed modulestore
         store = editable_modulestore()
 

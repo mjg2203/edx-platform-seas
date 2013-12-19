@@ -106,6 +106,7 @@ def initial_setup(server):
             # raise a WebDriverException
             try:
                 world.browser = Browser(browser_driver)
+                world.browser.driver.set_script_timeout(10)
                 world.visit('/')
 
             except WebDriverException:
@@ -132,6 +133,7 @@ def initial_setup(server):
             **make_saucelabs_desired_capabilities()
         )
         world.absorb(30, 'IMPLICIT_WAIT')
+        world.browser.set_script_timeout(10)
 
     elif world.LETTUCE_SELENIUM_CLIENT == 'grid':
         world.browser = Browser(
@@ -140,6 +142,7 @@ def initial_setup(server):
             browser=settings.SELENIUM_GRID.get('BROWSER'),
         )
         world.absorb(30, 'IMPLICIT_WAIT')
+        world.browser.driver.set_script_timeout(10)
 
     else:
         raise Exception("Unknown selenium client '{}'".format(world.LETTUCE_SELENIUM_CLIENT))
@@ -152,7 +155,7 @@ def initial_setup(server):
 def reset_data(scenario):
     """
     Clean out the django test database defined in the
-    envs/acceptance.py file: mitx_all/db/test_mitx.db
+    envs/acceptance.py file: edx-platform/db/test_edx.db
     """
     LOGGER.debug("Flushing the test database...")
     call_command('flush', interactive=False, verbosity=0)
@@ -172,7 +175,7 @@ def reset_databases(scenario):
     If no data is created during the test, these lines equivilently do nothing.
     '''
     mongo = MongoClient()
-    mongo.drop_database(settings.CONTENTSTORE['OPTIONS']['db'])
+    mongo.drop_database(settings.CONTENTSTORE['DOC_STORE_CONFIG']['db'])
     _CONTENTSTORE.clear()
 
     modulestore = xmodule.modulestore.django.editable_modulestore()
@@ -193,7 +196,8 @@ def screenshot_on_error(scenario):
         except WebDriverException:
             LOGGER.error('Could not capture a screenshot')
 
-@after.all
+
+@after.harvest
 def teardown_browser(total):
     """
     Quit the browser after executing the tests.
