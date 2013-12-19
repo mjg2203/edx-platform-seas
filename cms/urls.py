@@ -112,13 +112,6 @@ if settings.DEBUG:
     except ImportError:
         pass
 
-# CVN-specific
-urlpatterns += (
-    url(r'^(?P<org>[^/]+)/(?P<course>[^/]+)/course/(?P<name>[^/]+)$', 'cvn_cms.views.course_dashboard', name='course_index'),
-)
-
-urlpatterns = patterns(*urlpatterns)
-
 # Custom error pages
 #pylint: disable=C0103
 handler404 = 'contentstore.views.render_404'
