@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from student.views import login_user
 from student.views import _do_create_account
 from student.views import activate_account
-from mitxmako.shortcuts import render_to_response
+from edxmako.shortcuts import render_to_response
 
 
 

@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django_future.csrf import ensure_csrf_cookie
 from django.core.urlresolvers import reverse
-from mitxmako.shortcuts import render_to_response
+from edxmako.shortcuts import render_to_response
 from student.models import UserProfile
 from student.models import CourseEnrollment
 from django.contrib.auth.models import User

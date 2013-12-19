@@ -1,7 +1,7 @@
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from mitxmako.shortcuts import render_to_response
+from edxmako.shortcuts import render_to_response
 
 import proxy.views
 

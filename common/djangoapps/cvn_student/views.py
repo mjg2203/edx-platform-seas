@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django_future.csrf import ensure_csrf_cookie
 from external_auth.models import ExternalAuthMap
 from ims_lti_py import ToolConsumer, ToolConfig
-from mitxmako.shortcuts import render_to_response
+from edxmako.shortcuts import render_to_response
 from student.models import CourseEnrollment
 from student.models import UserProfile
 from student.views import cert_info
