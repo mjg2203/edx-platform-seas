@@ -15,7 +15,6 @@ from student.models import CourseEnrollment
 from student.models import UserProfile
 from student.views import cert_info
 from student.views import course_from_id
-from student.views import exam_registration_info
 from xmodule.modulestore.exceptions import ItemNotFoundError
 import hashlib
 import json
@@ -62,9 +61,7 @@ def cvn_lms_dashboard(request):
     show_courseware_links_for = frozenset(course.id for course, _enrollment in courses
                                           if has_access(request.user, course, 'load'))
 
-    cert_statuses = {course.id: cert_info(request.user, course) for course, _enrollment in courses}
-
-    exam_registrations = {course.id: exam_registration_info(request.user, course) for course, _enrollment in courses}
+    cert_statuses = {course.id: cert_info(request.user, course) for course, _enrollment in course_enrollment_pairs}
 
     # get info w.r.t ExternalAuthMap
     external_auth_map = None
@@ -88,7 +85,8 @@ def cvn_lms_dashboard(request):
                'errored_courses': errored_courses,
                'show_courseware_links_for': show_courseware_links_for,
                'cert_statuses': cert_statuses,
-               'exam_registrations': exam_registrations,
+
+
                'form':proct_form,
                }
 

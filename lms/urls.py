@@ -46,9 +46,6 @@ urlpatterns = ('',  # nopep8
     url(r'^create_account$', 'student.views.create_account', name='create_account'),
     url(r'^activate/(?P<key>[^/]*)$', 'student.views.activate_account', name="activate"),
 
-    url(r'^begin_exam_registration/(?P<course_id>[^/]+/[^/]+/[^/]+)$', 'student.views.begin_exam_registration', name="begin_exam_registration"),
-    url(r'^create_exam_registration$', 'student.views.create_exam_registration'),
-
     # cvn: we're not using passwords
     ## url(r'^password_reset/$', 'student.views.password_reset', name='password_reset'),
 
