@@ -29,13 +29,12 @@ from courseware.courses import get_courses, get_course_with_access
 def cvn_lms_dashboard(request):
     user = request.user
 
-    # Build our courses list for the user, but ignore any courses that no longer
-    # exist (because the course IDs have changed). Still, we don't delete those
-    # enrollments, because it could have been a data push snafu.
-    courses = []
+    # This view was copy-pasted from student.views
+    # We should figure out a way to not do that. --mjg
+    course_enrollment_pairs = []
     for enrollment in CourseEnrollment.enrollments_for_user(user):
         try:
-            courses.append((course_from_id(enrollment.course_id), enrollment))
+            course_enrollment_pairs.append((course_from_id(enrollment.course_id), enrollment))
         except ItemNotFoundError:
             log.error("User {0} enrolled in non-existent course {1}"
                       .format(user.username, enrollment.course_id))
@@ -58,7 +57,7 @@ def cvn_lms_dashboard(request):
     ##     staff_access = True
     ##     errored_courses = modulestore().get_errored_courses()
 
-    show_courseware_links_for = frozenset(course.id for course, _enrollment in courses
+    show_courseware_links_for = frozenset(course.id for course, _enrollment in course_enrollment_pairs
                                           if has_access(request.user, course, 'load'))
 
     cert_statuses = {course.id: cert_info(request.user, course) for course, _enrollment in course_enrollment_pairs}
@@ -77,7 +76,8 @@ def cvn_lms_dashboard(request):
         theProctor.save()
     proct_form = ProctorForm(instance=theProctor)
 
-    context = {'courses': courses,
+    context = {
+    'course_enrollment_pairs': course_enrollment_pairs,
                'course_optouts': course_optouts,
                'message': message,
                'external_auth_map': external_auth_map,
