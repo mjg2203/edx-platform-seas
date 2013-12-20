@@ -114,7 +114,7 @@ def open_new_course():
 
 def create_studio_user(
         uname='robot',
-        email='robot+studio@example.com',
+        email='robot+studio@edx.org',
         password='test',
         is_staff=False):
     studio_user = world.UserFactory(
@@ -143,7 +143,7 @@ def fill_in_course_info(
 
 def log_into_studio(
         uname='robot',
-        email='robot+studio@example.com',
+        email='robot+studio@edx.org',
         password='test',
         name='Robot Studio'):
 
@@ -171,7 +171,7 @@ def create_a_course():
 
     user = world.scenario_dict.get("USER")
     if not user:
-        user = get_user_by_email('robot+studio@example.com')
+        user = get_user_by_email('robot+studio@edx.org')
 
     add_course_author(user, course)
 
