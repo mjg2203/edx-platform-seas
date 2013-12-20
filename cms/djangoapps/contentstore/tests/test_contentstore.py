@@ -83,7 +83,7 @@ class ContentStoreToyCourseTest(ModuleStoreTestCase):
         settings.MODULESTORE['default']['OPTIONS']['fs_root'] = path('common/test/data')
         settings.MODULESTORE['direct']['OPTIONS']['fs_root'] = path('common/test/data')
         uname = 'testuser'
-        email = 'test+courses@example.com'
+        email = 'test+courses@edx.org'
         password = 'foo'
 
         # Create the use so we can log them in.
@@ -1369,7 +1369,7 @@ class ContentStoreTest(ModuleStoreTestCase):
         afterwards.
         """
         uname = 'testuser'
-        email = 'test+courses@example.com'
+        email = 'test+courses@edx.org'
         password = 'foo'
 
         # Create the use so we can log them in.

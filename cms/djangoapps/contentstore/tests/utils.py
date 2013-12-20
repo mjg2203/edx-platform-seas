@@ -69,7 +69,7 @@ class CourseTestCase(ModuleStoreTestCase):
         afterwards.
         """
         uname = 'testuser'
-        email = 'test+courses@example.com'
+        email = 'test+courses@edx.org'
         password = 'foo'
 
         # Create the use so we can log them in.
