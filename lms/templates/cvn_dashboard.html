@@ -1,0 +1,428 @@
+<%! from django.utils.translation import ugettext as _ %>
+
+<%!
+  from django.core.urlresolvers import reverse
+  from courseware.courses import course_image_url, get_course_about_section
+  import waffle
+%>
+<%inherit file="main.html" />
+
+<%namespace name='static' file='static_content.html'/>
+
+<%block name="title"><title>${_("Dashboard")}</title></%block>
+<%block name="bodyclass">view-dashboard is-authenticated</%block>
+
+<%block name="js_extra">
+<script type="text/javascript" src="${static.url('js/vendor/jquery.form.js')}"></script>
+  <script type="text/javascript">
+  (function() {
+
+    $(".email-settings").click(function(event) {
+      $("#email_settings_course_id").val( $(event.target).data("course-id") );
+      $("#email_settings_course_number").text( $(event.target).data("course-number") );
+      if($(event.target).data("optout") == "False") {
+        $("#receive_emails").prop('checked', true);
+      }
+    });
+
+    $(".unenroll").click(function(event) {
+      $("#unenroll_course_id").val( $(event.target).data("course-id") );
+      $("#unenroll_course_number").text( $(event.target).data("course-number") );
+    });
+
+    $('#unenroll_form').on('ajax:complete', function(event, xhr) {
+      if(xhr.status == 200) {
+        location.href = "${reverse('dashboard')}";
+      } else if (xhr.status == 403) {
+        location.href = "${reverse('signin_user')}?course_id=" +
+          $("#unenroll_course_id").val() + "&enrollment_action=unenroll";
+      } else {
+        $('#unenroll_error').html(
+          xhr.responseText ? xhr.responseText : "An error occurred. Please try again later."
+        ).stop().css("display", "block");
+      }
+    });
+
+    $("#change_proctorinfo_form").submit(function(){
+      $.ajax({
+        type: "GET",
+        url: "${reverse('change_proctorinfo')}",
+        data: $(this).serializeArray(),
+        success: function(data) {
+          if(data.success) {
+            $("#change_proctorinfo_error").css("display", "none");
+            $("#change_proctorinfo_success").text("You have successfully updated your proctor information.").stop().css("display", "block");
+            // emulate that after 1 second that we click outside the modal, it is dismissed
+            window.setTimeout(function(){$("#lean_overlay").click()}, 1000);
+          } else {
+            $("#change_proctorinfo_success").css("display", "none");
+            $(".change_proctorinfo_error").css("display", "none");
+            var printable = "Please correct the following form errors and submit this form again:<ul>";
+            for(var field in data.errors) {
+              printable += "<li>"+field+":"+data.errors[field][0]+"</li>";
+            }
+            printable += "</ul>";
+            $("#change_proctorinfo_error").html(printable).stop().css("display", "block");
+          }
+        },
+        error: function(xhr, textStatus, error) {
+          $("#change_proctorinfo_error").html("There's been an error updating your proctor's information. Please reload the page and try again.").stop().css("display", "block");
+        }
+      });
+      return false;
+    });
+    $("#email_settings_form").submit(function(){
+      $.ajax({
+        type: "POST",
+        url: '${reverse("change_email_settings")}',
+        data: $(this).serializeArray(),
+        success: function(data) {
+          if(data.success) {
+            location.href = "${reverse('dashboard')}";
+          }
+        },
+        error: function(xhr, textStatus, error) {
+          if (xhr.status == 403) {
+            location.href = "${reverse('signin_user')}";
+          }
+        }
+      });
+      return false;
+    });
+  })(this);
+  </script>
+</%block>
+
+<section class="container dashboard">
+
+  %if message:
+    <section class="dashboard-banner">
+      ${message}
+    </section>
+  %endif
+
+  <section class="profile-sidebar">
+    <header class="profile">
+      <h1 class="user-name">${ user.username }</h1>
+    </header>
+    <section class="user-info">
+      <ul>
+        <li>
+          <span class="title"><div class="icon name-icon"></div>${_("Full Name")} </span>
+          <span class="data">${ user.profile.name | h }</span>
+        </li>
+        <li>
+          <span class="title"><div class="icon email-icon"></div>${_("Email")}
+          </span> <span class="data">${ user.email | h }</span>
+        </li>
+        %if settings.CVN_ENABLE_PROCTOR:
+          <li>
+            <span class="title"><div class="icon name-icon"></div>${_("Proctor")}
+              % if external_auth_map is None or 'shib' not in external_auth_map.external_domain:
+              (<a href="#change_proctorinfo" rel="leanModal" class="edit-proctorinfo">${_("edit proctor info")}</a>)
+              % endif
+            </span> <span class="data">${ user.email | h }</span>
+          </li>
+        %else:
+          <!-- proctors disabled for now (mjg) -->
+        %endif
+      </ul>
+    </section>
+
+  </section>
+
+  <section class="my-courses">
+    <header>
+      <h2>${_("Current Courses")}</h2>
+    </header>
+
+    % if len(courses) > 0:
+      <ul class="listing-courses">
+        % for course, enrollment in courses:
+        <li class="course-item">
+          <article class="course ${enrollment.mode}">
+            <%
+              if waffle.flag_is_active(request, 'merge_course_tabs'):
+                  course_target = reverse('courseware', args=[course.id])
+              else:
+                  course_target = reverse('info', args=[course.id])
+            %>
+
+            % if course.id in show_courseware_links_for:
+              <a href="${course_target}" class="cover">
+                <img src="${course_image_url(course)}" alt="${_('{course_number} {course_name} Cover Image').format(course_number=course.number, course_name=course.display_name_with_default) |h}" />
+              </a>
+            % else:
+              <div class="cover">
+                <img src="${course_image_url(course)}" alt="${_('{course_number} {course_name} Cover Image').format(course_number=course.number, course_name=course.display_name_with_default) | h}" />
+              </div>
+            % endif
+
+            % if enrollment.mode == "verified":
+            <span class="sts-enrollment">
+              <span class="label">${_("Enrolled as: ")}</span>
+              <img class="deco-graphic" src="${static.url('images/vcert-ribbon-s.png')}" alt="ID Verified Ribbon/Badge">
+              <span class="sts-enrollment-value">${_("ID Verified")}</span>
+            </span>
+            % endif
+
+            <section class="info">
+              <hgroup>
+                <p class="date-block">
+                % if course.has_ended():
+                ${_("Course Completed - {end_date}").format(end_date=course.end_date_text)}
+                % elif course.has_started():
+                ${_("Course Started - {start_date}").format(start_date=course.start_date_text)}
+                % else:   # hasn't started yet
+                ${_("Course Starts - {start_date}").format(start_date=course.start_date_text)}
+                % endif
+                </p>
+                <h2 class="university">${get_course_about_section(course, 'university')}</h2>
+                <h3>
+                  % if course.id in show_courseware_links_for:
+                    <a href="${course_target}">${course.display_number_with_default | h} ${course.display_name_with_default}</a>
+                  % else:
+                    <span>${course.display_number_with_default | h} ${course.display_name_with_default}</span>
+                  % endif
+                </h3>
+              </hgroup>
+
+              % if course.has_ended() and cert_status:
+                  <%
+                  if cert_status['status'] == 'generating':
+                      status_css_class = 'course-status-certrendering'
+                  elif cert_status['status'] == 'ready':
+                      status_css_class = 'course-status-certavailable'
+                  elif cert_status['status'] == 'notpassing':
+                      status_css_class = 'course-status-certnotavailable'
+                  else:
+                      status_css_class = 'course-status-processing'
+                  %>
+                  <div class="message message-status ${status_css_class} is-shown">
+
+                  % if cert_status['status'] == 'processing':
+                        <p class="message-copy">${_("Final course details are being wrapped up at this time. Your final standing will be available shortly.")}</p>
+                  % elif cert_status['status'] in ('generating', 'ready', 'notpassing', 'restricted'):
+                        <p class="message-copy">${_("Your final grade:")}
+                        <span class="grade-value">${"{0:.0f}%".format(float(cert_status['grade'])*100)}</span>.
+                        % if cert_status['status'] == 'notpassing':
+                           ${_("Grade required for a certificate:")} <span class="grade-value">
+                             ${"{0:.0f}%".format(float(course.lowest_passing_grade)*100)}</span>.
+                        % elif cert_status['status'] == 'restricted':
+                            <p class="message-copy">
+                            ${_("Your certificate is being held pending confirmation that the issuance of your certificate is in compliance with strict U.S. embargoes on Iran, Cuba, Syria and Sudan. If you think our system has mistakenly identified you as being connected with one of those countries, please let us know by contacting {email}.").format(email='<a class="contact-link" href="mailto:{email}">{email}</a>.'.format(email=settings.CONTACT_EMAIL))}
+                            </p>
+                        % endif
+                        </p>
+                  % endif
+
+                  % if cert_status['show_disabled_download_button'] or cert_status['show_download_url'] or cert_status['show_survey_button']:
+                    <ul class="actions">
+                      % if cert_status['show_disabled_download_button']:
+                        <li class="action"><span class="disabled">
+                            ${_("Your Certificate is Generating")}</span></li>
+                      % elif cert_status['show_download_url']:
+                        <li class="action">
+                        <a class="btn" href="${cert_status['download_url']}"
+                           title="${_('This link will open/download a PDF document')}">
+                           Download Your PDF Certificate</a></li>
+                      % endif
+
+                      % if cert_status['show_survey_button']:
+                        <li class="action"><a class="cta" href="${cert_status['survey_url']}">
+                               ${_('Complete our course feedback survey')}</a></li>
+                      % endif
+                    </ul>
+                  % endif
+                  </div>
+            % endif
+            <!--a href="#unenroll-modal" class="unenroll" rel="leanModal" data-course-id="${course.id}" data-course-number="${course.number}">${_('Unregister')}</a-->
+
+              % if course.id in show_courseware_links_for:
+                % if course.has_ended():
+                  <a href="${course_target}" class="enter-course archived">${_('View Archived Course')}</a>
+                % else:
+                  <a href="${course_target}" class="enter-course">${_('View Course')}</a>
+                % endif
+              % endif
+
+
+
+              <!--a href="#unenroll-modal" class="unenroll" rel="leanModal" data-course-id="${course.id}" data-course-number="${course.number}">${_('Unregister')}</a-->
+
+          </section>
+        </article>
+      </li>
+      % endfor
+
+      </ul>
+    % else:
+      <section class="empty-dashboard-message">
+        % if settings.FEATURES.get('COURSES_ARE_BROWSABLE'):
+          <p>${_("Looks like you haven't registered for any courses yet.")}</p>
+          <a href="${marketing_link('COURSES')}">
+            ${_("Find courses now!")}
+          </a>
+        % else:
+          <p>${_("Looks like you haven't been enrolled in any courses yet.")}</p>
+        %endif
+      </section>
+    % endif
+
+    % if staff_access and len(errored_courses) > 0:
+      <div id="course-errors">
+        <h2>${_("Course-loading errors")}</h2>
+
+      % for course_dir, errors in errored_courses.items():
+         <h3>${course_dir | h}</h3>
+             <ul>
+           % for (msg, err) in errors:
+               <li>${msg}
+                 <ul><li><pre>${err}</pre></li></ul>
+               </li>
+           % endfor
+             </ul>
+      % endfor
+    % endif
+  </section>
+</section>
+
+<section id="password_reset_complete" class="modal">
+  <div class="inner-wrapper">
+    <header>
+      <h2>${_('Password Reset Email Sent')}</h2>
+      <hr/>
+    </header>
+    <div>
+      <form> <!-- Here for styling reasons -->
+        <section>
+          <p>${_('An email has been sent to {email}. Follow the link in the email to change your password.').format(email=user.email)}</p>
+        </section>
+      </form>
+    </div>
+    <a href="#" role="button" class="close-modal" title="${_('Close Modal')}">&#10005;</a>
+  </div>
+</section>
+
+<section id="change_proctorinfo" class="modal">
+  <div class="inner-wrapper">
+    <header>
+      <h2><span id="change_proctorinfo_title">${_("Edit Proctor Info")}</span></h2>
+      <hr/>
+    </header>
+    <div id="change_proctorinfo_body">
+      <form id="change_proctorinfo_form" action="javascript:return false;" method="GET">
+        
+        
+        <fieldset>
+
+
+
+          
+<div class="input-group">
+<p>         
+  <span class="required">* required field</span>
+</p>
+</div>
+<div class="input-group">
+  <h2>Proctor Information</h2>
+  <div style="height: 10px; overflow: hidden;"></div>
+
+<p>
+<label><span class="required">*</span>${_('First name:')}</label>
+<div class="change_proctorinfo_error" id="proctor_first_name_error"></div>
+${ form['first_name'] }
+</p>
+
+<p>
+<label><span class="required">*</span>${_('Last name:')}</label>
+<div class="change_proctorinfo_error" id="proctor_last_name_error"></div>
+${ form['last_name'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Title:')}</label>
+<div class="change_proctorinfo_error" id="proctor_title_error"></div>
+${ form['title'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Relationship to Student:')}</label>
+<div class="change_proctorinfo_error" id="proctor_relationship_to_student_error"></div>
+${ form['relationship_to_student'] }
+</p>
+<p>
+<b><u><font color=red>ATTENTION:</font></u><font size=-1> Please enter valid company email addresses only!</b></font><br>
+<font size=-1><u>Good Example</u>: joe@us.ibm.com , joe@motorola.com</font> <br>
+<font size=-1><u>Bad Example</u>: joe@yahoo.com , joe@hotmail.com</font>  <br>
+</p>
+<p>
+<label><span class="required">*</span>${_('Email:')}</label>
+<div class="change_proctorinfo_error" id="proctor_email_error"></div>
+${ form['email'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Phone number:')}</label>
+<div class="change_proctorinfo_error" id="proctor_phone_error"></div>
+${ form['phone'] }
+</p>
+<p>
+<label>${_('Fax number:')}</label>
+<div class="change_proctorinfo_error" id="proctor_fax_error"></div>
+${ form['fax'] }
+</p>
+</div>
+
+<div class="input-group">
+<h2>Exam Location</h2>
+<div style="height: 10px; overflow: hidden;"></div>
+
+<p>
+<label><span class="required">*</span>${_('Street Address 1:')}</label>
+<div class="change_proctorinfo_error" id="proctor_street_address_1_error"></div>
+${ form['street_address_1'] }
+</p>
+<p>
+<label>${_('Street Address 2:')}</label>
+<div class="change_proctorinfo_error" id="proctor_street_address_2_error"></div>
+${ form['street_address_2'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('City:')}</label>
+<div class="change_proctorinfo_error" id="proctor_city_error"></div>
+${ form['city'] }
+</p>
+<p>
+<label>${_('State:')}</label>
+<div class="change_proctorinfo_error" id="proctor_state_error"></div>
+${ form['state'] }
+</p>
+<p>
+<label>${_('ZIP code:')}</label>
+<div class="change_proctorinfo_error" id="proctor_zip_code_error"></div>
+${ form['zip_code'] }
+</p>
+<p>
+<label><span class="required">*</span>${_('Country:')}</label>
+<div class="change_proctorinfo_error" id="proctor_country_error"></div>
+${ form['country'] }
+</p>
+
+</div>
+<section>
+<p>
+<i>Please carefully review the link below before submitting proctor information:</i>
+<br>
+<a href="academicintegrity.php" target="_blank"> Academic Integrity and Exam Proctoring Guidelines </a>
+</p>
+</section>
+<div id="change_proctorinfo_error" class="modal-form-error"> </div>
+<div id="change_proctorinfo_success" class="modal-form-success" style="background:#8FC75C; border: 1px solid #329014; color: #0A751F; padding:10px; display:none;"> </div>
+<div class="submit">
+    <input type="submit" id="plz_submit_proctorinfo_change" value="${_('Save Proctor Info')}"/>
+</div>
+        </fieldset>
+      </form>
+    </div>
+    <a href="#" role="button" class="close-modal" title="${_('Close Modal')}">&#10005;</a>
+  </div>
+</section>
+

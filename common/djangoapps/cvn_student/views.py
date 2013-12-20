@@ -31,10 +31,10 @@ def cvn_lms_dashboard(request):
 
     # This view was copy-pasted from student.views
     # We should figure out a way to not do that. --mjg
-    course_enrollment_pairs = []
+    courses = []
     for enrollment in CourseEnrollment.enrollments_for_user(user):
         try:
-            course_enrollment_pairs.append((course_from_id(enrollment.course_id), enrollment))
+            courses.append((course_from_id(enrollment.course_id), enrollment))
         except ItemNotFoundError:
             log.error("User {0} enrolled in non-existent course {1}"
                       .format(user.username, enrollment.course_id))
@@ -57,10 +57,11 @@ def cvn_lms_dashboard(request):
     ##     staff_access = True
     ##     errored_courses = modulestore().get_errored_courses()
 
-    show_courseware_links_for = frozenset(course.id for course, _enrollment in course_enrollment_pairs
+    show_courseware_links_for = frozenset(course.id for course, _enrollment in courses
                                           if has_access(request.user, course, 'load'))
 
-    cert_statuses = {course.id: cert_info(request.user, course) for course, _enrollment in course_enrollment_pairs}
+    cert_statuses = {course.id: cert_info(request.user, course) for course, _enrollment in courses}
+
 
     # get info w.r.t ExternalAuthMap
     external_auth_map = None
@@ -76,8 +77,7 @@ def cvn_lms_dashboard(request):
         theProctor.save()
     proct_form = ProctorForm(instance=theProctor)
 
-    context = {
-    'course_enrollment_pairs': course_enrollment_pairs,
+    context = {'courses': courses,
                'course_optouts': course_optouts,
                'message': message,
                'external_auth_map': external_auth_map,
@@ -85,12 +85,10 @@ def cvn_lms_dashboard(request):
                'errored_courses': errored_courses,
                'show_courseware_links_for': show_courseware_links_for,
                'cert_statuses': cert_statuses,
-
-
                'form':proct_form,
                }
 
-    return render_to_response('dashboard.html', context)
+    return render_to_response('cvn_dashboard.html', context)
 
 
 
