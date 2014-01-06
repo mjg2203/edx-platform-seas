@@ -21,12 +21,6 @@ LOGGING = get_logger_config(ENV_ROOT / "log",
                             dev_env=True,
                             debug=True)
 
-DOC_STORE_CONFIG = {
-    'host': 'localhost',
-    'db': 'edxapp',
-    'collection': 'modulestore',
-}
-
 modulestore_options = {
     'default_class': 'xmodule.raw_module.RawDescriptor',
     'fs_root': GITHUB_REPO_ROOT,
@@ -58,6 +52,7 @@ CONTENTSTORE = {
     'ENGINE': 'xmodule.contentstore.mongo.MongoContentStore',
     'DOC_STORE_CONFIG': {
         'host': 'localhost',
+        #FIXME: this might be wrong --mjg
         'db': 'edxapp',
     },
     # allow for additional options that can be keyed on a name, e.g. 'trashcan'

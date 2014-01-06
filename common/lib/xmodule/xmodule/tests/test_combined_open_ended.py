@@ -18,6 +18,7 @@ from webob.multidict import MultiDict
 
 from xmodule.open_ended_grading_classes.openendedchild import OpenEndedChild
 from xmodule.open_ended_grading_classes.open_ended_module import OpenEndedModule
+from xmodule.open_ended_grading_classes.self_assessment_module import SelfAssessmentModule
 from xmodule.open_ended_grading_classes.combined_open_ended_modulev1 import CombinedOpenEndedV1Module
 from xmodule.open_ended_grading_classes.grading_service_module import GradingServiceError
 from xmodule.combined_open_ended_module import CombinedOpenEndedModule
@@ -27,7 +28,9 @@ from xmodule.progress import Progress
 from xmodule.tests.test_util_open_ended import (
     DummyModulestore, TEST_STATE_SA_IN,
     MOCK_INSTANCE_STATE, TEST_STATE_SA, TEST_STATE_AI, TEST_STATE_AI2, TEST_STATE_AI2_INVALID,
-    TEST_STATE_SINGLE, TEST_STATE_PE_SINGLE, MockUploadedFile
+    TEST_STATE_SINGLE, TEST_STATE_PE_SINGLE, MockUploadedFile, INSTANCE_INCONSISTENT_STATE,
+    INSTANCE_INCONSISTENT_STATE2, INSTANCE_INCONSISTENT_STATE3, INSTANCE_INCONSISTENT_STATE4,
+    INSTANCE_INCONSISTENT_STATE5
 )
 
 from xblock.field_data import DictFieldData
@@ -358,7 +361,7 @@ class OpenEndedModuleTest(unittest.TestCase):
 
         # Create a module with no state yet.  Important that this start off as a blank slate.
         test_module = OpenEndedModule(self.test_system, self.location,
-                                                self.definition, self.descriptor, self.static_data, self.metadata)
+                                      self.definition, self.descriptor, self.static_data, self.metadata)
 
         saved_response = "Saved response."
         submitted_response = "Submitted response."
@@ -369,7 +372,7 @@ class OpenEndedModuleTest(unittest.TestCase):
         self.assertEqual(test_module.get_display_answer(), "")
 
         # Now, store an answer in the module.
-        test_module.handle_ajax("store_answer", {'student_answer' : saved_response}, get_test_system())
+        test_module.handle_ajax("store_answer", {'student_answer': saved_response}, get_test_system())
         # The stored answer should now equal our response.
         self.assertEqual(test_module.stored_answer, saved_response)
         self.assertEqual(test_module.get_display_answer(), saved_response)
@@ -386,6 +389,7 @@ class OpenEndedModuleTest(unittest.TestCase):
         self.assertEqual(test_module.stored_answer, None)
         # Confirm that the answer is stored properly.
         self.assertEqual(test_module.latest_answer(), submitted_response)
+
 
 class CombinedOpenEndedModuleTest(unittest.TestCase):
     """
@@ -496,6 +500,27 @@ class CombinedOpenEndedModuleTest(unittest.TestCase):
         self.assertEqual(response_dict['type'], "selfassessment")
         self.assertEqual(response_dict['max_score'], self.max_score)
         self.assertEqual(response_dict['state'], CombinedOpenEndedV1Module.INITIAL)
+
+    def test_create_task(self):
+        combinedoe = self.generate_oe_module(TEST_STATE_AI, 1, [self.task_xml1, self.task_xml2])
+
+        first_task = combinedoe.create_task(combinedoe.task_states[0], combinedoe.task_xml[0])
+        self.assertIsInstance(first_task, SelfAssessmentModule)
+
+        second_task = combinedoe.create_task(combinedoe.task_states[1], combinedoe.task_xml[1])
+        self.assertIsInstance(second_task, OpenEndedModule)
+
+    def test_get_task_number(self):
+        combinedoe = self.generate_oe_module(TEST_STATE_AI, 1, [self.task_xml1, self.task_xml2])
+
+        first_task = combinedoe.get_task_number(0)
+        self.assertIsInstance(first_task, SelfAssessmentModule)
+
+        second_task = combinedoe.get_task_number(1)
+        self.assertIsInstance(second_task, OpenEndedModule)
+
+        third_task = combinedoe.get_task_number(2)
+        self.assertIsNone(third_task)
 
     def test_update_task_states(self):
         """
@@ -610,7 +635,6 @@ class CombinedOpenEndedModuleTest(unittest.TestCase):
                                                    metadata=self.metadata,
                                                    instance_state={'task_states': TEST_STATE_SA_IN})
 
-
     def test_get_score_realistic(self):
         """
         Try to parse the correct score from a json instance state
@@ -715,6 +739,175 @@ class CombinedOpenEndedModuleTest(unittest.TestCase):
 
     def test_state_pe_single(self):
         self.ai_state_success(TEST_STATE_PE_SINGLE, iscore=0, tasks=[self.task_xml2])
+
+
+class CombinedOpenEndedModuleConsistencyTest(unittest.TestCase):
+    """
+    Unit tests for the combined open ended xmodule rubric scores consistency.
+    """
+
+    # location, definition_template, prompt, rubric, max_score, metadata, oeparam, task_xml1, task_xml2
+    # All these variables are used to construct the xmodule descriptor.
+    location = Location(["i4x", "edX", "open_ended", "combinedopenended",
+                         "SampleQuestion"])
+    definition_template = """
+                    <combinedopenended attempts="10000">
+                    {rubric}
+                    {prompt}
+                    <task>
+                    {task1}
+                    </task>
+                    <task>
+                    {task2}
+                    </task>
+                    </combinedopenended>
+                    """
+    prompt = "<prompt>This is a question prompt</prompt>"
+    rubric = '''<rubric><rubric>
+        <category>
+        <description>Response Quality</description>
+        <option>The response is not a satisfactory answer to the question.  It either fails to address the question or does so in a limited way, with no evidence of higher-order thinking.</option>
+        <option>Second option</option>
+        </category>
+         </rubric></rubric>'''
+    max_score = 10
+
+    metadata = {'attempts': '10', 'max_score': max_score}
+
+    oeparam = etree.XML('''
+      <openendedparam>
+            <initial_display>Enter essay here.</initial_display>
+            <answer_display>This is the answer.</answer_display>
+            <grader_payload>{"grader_settings" : "ml_grading.conf", "problem_id" : "6.002x/Welcome/OETest"}</grader_payload>
+        </openendedparam>
+    ''')
+
+    task_xml1 = '''
+                <selfassessment>
+                    <hintprompt>
+                        What hint about this problem would you give to someone?
+                    </hintprompt>
+                    <submitmessage>
+                        Save Succcesful.  Thanks for participating!
+                    </submitmessage>
+                </selfassessment>
+            '''
+    task_xml2 = '''
+    <openended min_score_to_attempt="1" max_score_to_attempt="10">
+            <openendedparam>
+                    <initial_display>Enter essay here.</initial_display>
+                    <answer_display>This is the answer.</answer_display>
+                    <grader_payload>{"grader_settings" : "ml_grading.conf", "problem_id" : "6.002x/Welcome/OETest"}</grader_payload>
+           </openendedparam>
+    </openended>'''
+
+
+    static_data = {
+        'max_attempts': 20,
+        'prompt': prompt,
+        'rubric': rubric,
+        'max_score': max_score,
+        'display_name': 'Name',
+        'accept_file_upload': False,
+        'close_date': "",
+        's3_interface': test_util_open_ended.S3_INTERFACE,
+        'open_ended_grading_interface': test_util_open_ended.OPEN_ENDED_GRADING_INTERFACE,
+        'skip_basic_checks': False,
+        'graded': True,
+    }
+
+    definition = {'prompt': etree.XML(prompt), 'rubric': etree.XML(rubric), 'task_xml': [task_xml1, task_xml2]}
+    full_definition = definition_template.format(prompt=prompt, rubric=rubric, task1=task_xml1, task2=task_xml2)
+    descriptor = Mock(data=full_definition)
+    test_system = get_test_system()
+    test_system.open_ended_grading_interface = None
+    combinedoe_container = CombinedOpenEndedModule(
+        descriptor=descriptor,
+        runtime=test_system,
+        field_data=DictFieldData({
+            'data': full_definition,
+            'weight': '1',
+        }),
+        scope_ids=ScopeIds(None, None, None, None),
+    )
+
+    def setUp(self):
+        self.combinedoe = CombinedOpenEndedV1Module(self.test_system,
+                                                    self.location,
+                                                    self.definition,
+                                                    self.descriptor,
+                                                    static_data=self.static_data,
+                                                    metadata=self.metadata,
+                                                    instance_state=json.loads(INSTANCE_INCONSISTENT_STATE))
+
+    def test_get_score(self):
+        """
+        If grader type is ML score should be updated from rubric scores. Aggregate rubric scores = sum([3])*5.
+        """
+        score_dict = self.combinedoe.get_score()
+        self.assertEqual(score_dict['score'], 15.0)
+        self.assertEqual(score_dict['total'], 5.0)
+
+    def test_get_score_with_pe_grader(self):
+        """
+        If grader type is PE score should not be updated from rubric scores. Aggregate rubric scores = sum([3])*5.
+        """
+        combinedoe = CombinedOpenEndedV1Module(self.test_system,
+                                               self.location,
+                                               self.definition,
+                                               self.descriptor,
+                                               static_data=self.static_data,
+                                               metadata=self.metadata,
+                                               instance_state=json.loads(INSTANCE_INCONSISTENT_STATE2))
+        score_dict = combinedoe.get_score()
+        self.assertNotEqual(score_dict['score'], 15.0)
+
+    def test_get_score_with_different_score_value_in_rubric(self):
+        """
+        If grader type is ML score should be updated from rubric scores. Aggregate rubric scores = sum([5])*5.
+        """
+        combinedoe = CombinedOpenEndedV1Module(self.test_system,
+                                               self.location,
+                                               self.definition,
+                                               self.descriptor,
+                                               static_data=self.static_data,
+                                               metadata=self.metadata,
+                                               instance_state=json.loads(INSTANCE_INCONSISTENT_STATE3))
+        score_dict = combinedoe.get_score()
+        self.assertEqual(score_dict['score'], 25.0)
+        self.assertEqual(score_dict['total'], 5.0)
+
+    def test_get_score_with_old_task_states(self):
+        """
+        If grader type is ML and old_task_states are present in instance inconsistent state score should be updated
+        from rubric scores. Aggregate rubric scores = sum([3])*5.
+        """
+        combinedoe = CombinedOpenEndedV1Module(self.test_system,
+                                               self.location,
+                                               self.definition,
+                                               self.descriptor,
+                                               static_data=self.static_data,
+                                               metadata=self.metadata,
+                                               instance_state=json.loads(INSTANCE_INCONSISTENT_STATE4))
+        score_dict = combinedoe.get_score()
+        self.assertEqual(score_dict['score'], 15.0)
+        self.assertEqual(score_dict['total'], 5.0)
+
+    def test_get_score_with_score_missing(self):
+        """
+        If grader type is ML and score field is missing in instance inconsistent state score should be updated from
+        rubric scores. Aggregate rubric scores = sum([3])*5.
+        """
+        combinedoe = CombinedOpenEndedV1Module(self.test_system,
+                                               self.location,
+                                               self.definition,
+                                               self.descriptor,
+                                               static_data=self.static_data,
+                                               metadata=self.metadata,
+                                               instance_state=json.loads(INSTANCE_INCONSISTENT_STATE5))
+        score_dict = combinedoe.get_score()
+        self.assertEqual(score_dict['score'], 15.0)
+        self.assertEqual(score_dict['total'], 5.0)
 
 
 class OpenEndedModuleXmlTest(unittest.TestCase, DummyModulestore):
@@ -948,6 +1141,7 @@ class OpenEndedModuleXmlAttemptTest(unittest.TestCase, DummyModulestore):
         reset_data = json.loads(self._handle_ajax("reset", {}))
         self.assertEqual(reset_data['success'], False)
 
+
 class OpenEndedModuleXmlImageUploadTest(unittest.TestCase, DummyModulestore):
     """
     Test if student is able to upload images properly.
@@ -1018,7 +1212,7 @@ class OpenEndedModuleXmlImageUploadTest(unittest.TestCase, DummyModulestore):
         # Simulate a student saving an answer with a link.
         response = module.handle_ajax("save_answer", {
             "student_answer": "{0} {1}".format(self.answer_text, self.answer_link)
-            })
+        })
 
         response = json.loads(response)
 
