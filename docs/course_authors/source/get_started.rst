@@ -20,6 +20,7 @@ This chapter describes the tools you use to build an edX course, and how to crea
 * :ref:`Use Studio on Edge`
 * :ref:`Create Your First Course`
 * :ref:`View Your Course on Edge`
+* :ref:`What is edX.org?`
 * :ref:`Register Your Course on edX.org`
 
 If you are using an instance of Open edX, some specifics in this chapter may not apply.
@@ -46,6 +47,8 @@ What is Edge?
 ******************
 
 EdX Edge_ is the site where you can create courses with Studio, then run courses through the edX Learning Management System.
+
+EdX Edge_ is also used to host SPOCs, or Small Private Online Courses.
 
 Visually and functionally, edX Edge is the same as edX.org_. 
 However, on Edge you can freely publish courses.  
@@ -113,13 +116,13 @@ When you receive notice that you can create courses, log into Studio_.
 You see the following page:
 
 .. image:: Images/first_course.png
- :width: 800  
+ :width: 600  
 
 #. Click **Create Your First Course**.
 #. Enter course information as needed and click **Create**.
 
   .. image:: Images/new_course_info.png
-     :width: 800
+   :width: 600
 
   .. note::  Enter new course information carefully. This information becomes part of the URL for your course. To change the URL after the course is created, you must contact edX through the Help site (http://help.edge.edx.org). Additionally, because this information becomes part of your course URL, the total number of characters in the following three fields must be 65 or fewer.
 
@@ -133,11 +136,11 @@ You see the following page:
 
 3. Click **Save.**
 
-You then see the empty Course Outline.
+Your new course opens to the **Course Outline** page. Because you haven't created any content yet, this page is empty.
 
 In your browser’s address bar, notice that the URL of your course includes the course organization, number, and course run.
 
-The rest of this documentation describes how you now build and run your course. But first, lets view your empty course on Edge.
+The rest of this documentation describes how you now build and run your course. But first, let's view your empty course on Edge.
   
 .. _View Your Course on Edge:
     
@@ -151,26 +154,41 @@ In the Course Outline in Studio, click **View Live**. The course opens on Edge.
 You can also go directly to Edge_. Log in if prompted. You see the course you just created listed:
 
 .. image:: Images/new_course.png
- :width: 800
+ :width: 600
 
 You can view the course and see that there is no content yet.
 
 To build your course, keep reading this document.
 
+
+.. _What is edX.org?:
+
+*******************
+What is edX.org?
+*******************
+edX.org_ is the site where edX hosts MOOCs, or Massive Open Online Courses, that are created with our institutional partners. These courses are open to students from around the world.
+
+Courses on edX.org_ are listed publicly.
+
+To publish courses on edX.org, you must have an agreement with edX and specific approval from your university.
+
+
+
 .. _Register Your Course on edx.org:
 
 ************************************
-Register Your Course on edX.org
+View Your Course on edX.org
 ************************************
 
-If you're creating your course on **edX**, you must register
-for your course.
+If your organization has an agreement with edX and you have specific approval, you can create a course on edX. To see the content of your course as students will see it, you must register for your course. You can then view it on the LMS.
+
+#. Create your course and add content.
 
 #. On the **Course Outline** page, click the blue **View
    Live** button in the upper-right corner of your screen.
 
    Your course registration page opens in a new tab on the LMS.
 
-#. Click the blue **Register** button to register for your course.
-#. In your browser, switch back to the tab that shows Studio. You will
+#. Click the blue **Register** button to register for your course. After you register for your course, it opens in the LMS.
+#. To continue working on your course, in your browser, switch back to the tab that shows Studio. You will
    still be on the **Course Outline** page.
