@@ -1,39 +1,22 @@
 from .devstack import *
 
-# THEME BROKEN!
-# sass runs as:
-
-### sass --style compressed --cache-location /tmp/sass-cache --load-path ./common/static/sass --update -E utf-8 */static
-
-# When it should run as:
-
-###  sass --style compressed --cache-location /tmp/sass-cache --load-path ./themes/stanford/static/sass/ --load-path ./common/static/sass --update -E utf-8 */static
-
-with open(CONFIG_ROOT / "cvn_" + CONFIG_PREFIX + "env.json") as env_file:
-    CVN_ENV_TOKENS = json.load(env_file)
-
-## THEME_NAME=CVN_ENV_TOKENS.get('THEME_NAME')
-## 
-## enable_theme(THEME_NAME)
-## FAVICON_PATH = 'themes/%s/images/favicon.ico' % THEME_NAME
-
 LOGIN_URL = '/login'
 
 INSTALLED_APPS += ('wind','cvn_lms', 'cvn_stats', 'cvn_student')
 
-WIND_LOGIN_URL = CVN_ENV_TOKENS.get("WIND_LOGIN_URL")
-WIND_DESTINATION = CVN_ENV_TOKENS.get("WIND_DESTINATION")
-WIND_VALIDATION = CVN_ENV_TOKENS.get("WIND_VALIDATION")
-LMS_URL = CVN_ENV_TOKENS.get("LMS_URL")
-CMS_URL = CVN_ENV_TOKENS.get("CMS_URL")
-CVN_SC_URL = CVN_ENV_TOKENS.get("CVN_SC_URL")
-LTI_LAUNCH_URL = CVN_ENV_TOKENS.get("LTI_LAUNCH_URL")
-LTI_CONSUMER_KEY = CVN_ENV_TOKENS.get("LTI_CONSUMER_KEY")
-LTI_CONSUMER_SECRET = CVN_ENV_TOKENS.get("LTI_CONSUMER_SECRET")
+WIND_LOGIN_URL = ENV_TOKENS.get("WIND_LOGIN_URL")
+WIND_DESTINATION = ENV_TOKENS.get("WIND_DESTINATION")
+WIND_VALIDATION = ENV_TOKENS.get("WIND_VALIDATION")
+LMS_URL = ENV_TOKENS.get("LMS_URL")
+CMS_URL = ENV_TOKENS.get("CMS_URL")
+CVN_SC_URL = ENV_TOKENS.get("CVN_SC_URL")
+LTI_LAUNCH_URL = ENV_TOKENS.get("LTI_LAUNCH_URL")
+LTI_CONSUMER_KEY = ENV_TOKENS.get("LTI_CONSUMER_KEY")
+LTI_CONSUMER_SECRET = ENV_TOKENS.get("LTI_CONSUMER_SECRET")
 
 ENABLE_DJANGO_ADMIN_SITE = True
 FEATURES['USE_CUSTOM_THEME'] = True
-FEATURES['ENABLE_DISCUSSION_SERVICE'] = CVN_ENV_TOKENS.get("ENABLE_DISCUSSION_SERVICE", True)
+FEATURES['ENABLE_DISCUSSION_SERVICE'] = ENV_TOKENS.get("ENABLE_DISCUSSION_SERVICE", True)
 SITE_NAME = "lms.cvn.columbia.edu"
 
 ## DATABASES['cvn_php'] = {
@@ -43,10 +26,10 @@ SITE_NAME = "lms.cvn.columbia.edu"
 ## 
 ## DATABASES['default'] = {
 ##         'ENGINE': 'django.db.backends.mysql',
-##         'NAME': CVN_ENV_TOKENS.get('MYSQL_DBNAME'),
-##         'USER': CVN_ENV_TOKENS.get('MYSQL_USER'),
-##         'PASSWORD': CVN_ENV_TOKENS.get('MYSQL_PASSWORD'),
-##         'HOST': CVN_ENV_TOKENS.get('MYSQL_HOST', '127.0.0.1'),
+##         'NAME': ENV_TOKENS.get('MYSQL_DBNAME'),
+##         'USER': ENV_TOKENS.get('MYSQL_USER'),
+##         'PASSWORD': ENV_TOKENS.get('MYSQL_PASSWORD'),
+##         'HOST': ENV_TOKENS.get('MYSQL_HOST', '127.0.0.1'),
 ##         'PORT': '3306',
 ## }
 
